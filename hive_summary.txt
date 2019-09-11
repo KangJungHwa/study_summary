@@ -1,0 +1,747 @@
+Hive
+
+1.파티션이란 
+
+파티션키는 어떤 위치에 데이터가 저장될지를 결정하는 역할을 한다. 
+
+파티션은 hdfs에 해당 파티션 마다 hdfs 디렉토리를 생성하여 사용자가 검색 시 
+
+해당 hdfs 디렉토리를 검색하므로 검색속도를 높이기 용의하다.
+
+------------------------------------------------------------------------------------
+
+2. 버켓(또는 클러스터) 이란?
+
+사용자가 데이터를 조회 시 파티션의 데이터는 파티션 키의 해쉬 함수의 값에 기반하여 
+
+버켓 안에 나눠어져 들어간다. 이는 효율적으로 데이터를 샘플링 하는데 사용된다. 
+파티셔닝이나 버켓팅은 테이블을 위해서 필요한게 아니라 더 빠른 쿼리 처리속도를 위해서 
+불필요한 데이터를 필터링 하기 위한 목적으로 사용된다.
+조인키로 버킷을 생성해 두면 생성된 버켓중 필요한 버킷만 조회되기 때문에 디렉토리를
+전체 스캔하는 것보다 훨씬 빠르게 작업할 수 있다.
+아래의 예제처럼Clustered by 절을 통해 버켓팅을 위한 컬럼을 지정할 수 있다. 
+UniqueCarrier 기준으로 32개의 버켓으로 해쉬함수에 의해서 클러스터 된다.
+버켓안에 데이터는 viewTime컬럼에 의해 정렬되서 저장된다.
+
+create table airline_delay2(Year INT, Month INT, 
+                            UniqueCarrier string, 
+                            ArrDelay INT, 
+			    DepDelay INT)
+		            clustered by (UniqueCarrier) INTO 32 BUCKETS;
+
+
+------------------------------------------------------------------------------------
+
+2. hive command line 
+   - hive CLI : citi에서는 sentry가 적용 되어 있어 사용하지 못함
+   - beeline  : 텍티아 에서 사용하는 CLI
+   - HUE : 아래 항목은 hue 인수인계시 교육
+           notebook
+           beewax
+
+3. beeline 접속 절차:
+    3-1. kerberos 티켓 생성
+	   - hdfs또는 hive 데이터베이스에 읽기 권한이 있는 user로 티켓을 생성한다.
+	   - dev  : kinit -kt /opt/Cloudera/keytabs/hdfs.bdicr101x03h2.keytab hdfs/bdicr101x03h2.apac.nsroot.net@KRUXDEV.DYN.NSROOT.NET
+	   - uat  : kinit -kt /opt/Cloudera/keytabs/hdfs.bdicr101x13h2.keytab hdfs/bdicr101x13h2.apac.nsroot.net@KRUXUAT.DYN.NSROOT.NET
+	   - prod : kinit -kt /opt/Cloudera/keytabs/hdfs.bdyir101x07h2.keytab hdfs/bdyir101x07h2.apac.nsroot.net@KRUXPROD.DYN.NSROOT.NET
+    3-2. beeline 접속
+      beeline -u "jdbc:hive2://bdicr101x05h2.apac.nsroot.net:10000/default;principal=hive/bdicr101x05h2.apac.nsroot.net@KRUXDEV.DYN.NSROOT.NET"
+      beeline -u "jdbc:hive2://bdicr101x10h2.apac.nsroot.net:10000/default;principal=hive/bdicr101x10h2.apac.nsroot.net@KRUXUAT.DYN.NSROOT.NET"
+      beeline -u "jdbc:hive2://bdyir101x04h2.apac.nsroot.net:10000/default;principal=hive/bdyir101x04h2.apac.nsroot.net@KRUXPROD.DYN.NSROOT.NET"
+    4-2 beeline 종료 :
+	    !q;
+   
+   
+4. beeline 실행 옵션
+    4-1 One shot 명령(-e)
+      beeline -u "jdbc:hive2://bdicr101x05h2.apac.nsroot.net:10000/default;principal=hive/bdicr101x05h2.apac.nsroot.net@KRUXDEV.DYN.NSROOT.NET" -e "use default;select * from partition_tab" ;
+    4-2 hql 실행
+        beeline -u "jdbc:hive2://bdicr101x05h2.apac.nsroot.net:10000/default;principal=hive/bdicr101x05h2.apac.nsroot.net@KRUXDEV.DYN.NSROOT.NET" -f "/tmp/sel_auth.hql"
+    4-3 컬럼헤더 숨기기, 로그표시 안함, 테이블 표시 않함.
+beeline --silent=true --showHeader=false --outputformat=dsv -u "jdbc:hive2://bdicr101x05h2.apac.nsroot.net:10000/default;principal=hive/bdicr101x05h2.apac.nsroot.net@KRUXDEV.DYN.NSROOT.NET";
+		 
+		 위의 실행옵션을 주었을때 output: 
+		 0: jdbc:hive2://bdicr101x05h2.apac.nsroot.net> select "test";
+                 test
+		 
+		  옵션 없이 실행시 output: 
+		 0: jdbc:hive2://bdicr101x05h2.apac.nsroot.net> select "test";
+			INFO  : Compiling command(queryId=hive_20171115100606_fbf35fca-66b2-47f1-9f26-005c8aa48093): select "test"
+			INFO  : Semantic Analysis Completed
+			INFO  : Returning Hive schema: Schema(fieldSchemas:[FieldSchema(name:_c0, type:string, comment:null)], properties:null)
+			INFO  : Completed compiling command(queryId=hive_20171115100606_fbf35fca-66b2-47f1-9f26-005c8aa48093); Time taken: 0.171 seconds
+			INFO  : Executing command(queryId=hive_20171115100606_fbf35fca-66b2-47f1-9f26-005c8aa48093): select "test"
+			INFO  : Completed executing command(queryId=hive_20171115100606_fbf35fca-66b2-47f1-9f26-005c8aa48093); Time taken: 0.002 seconds
+			INFO  : OK
+			+-------+--+
+			|  _c0  |
+			+-------+--+
+			| test  |
+			+-------+--+
+			1 row selected (0.264 seconds)
+			
+    4-4 confiuration 파일 실행 -i 옵션
+	    config 파일 :
+		아래처럼 하이브 실행시 환경설정을 파일에 저장을 해놓고 -한꺼번에 실행 할 수 있다.
+		set hive.vectorized.execution.enable=true; 
+		set hive.cob.enable=true;
+		set hive.exec.dynamic.partition=true; 
+		SET hive.exec.dynamic.partition.mode=nonstrict;
+		SET hive.exec.max.created.files=900000;
+		SET hive.exec.max.dynamic.partitions=1000000000;
+		SET hive.exec.max.dynamic.partitions.pernode=1000000000;
+	
+		beeline -u "jdbc:hive2://bdicr101x05h2.apac.nsroot.net:10000/default;principal=hive/bdicr101x05h2.apac.nsroot.net@KRUXDEV.DYN.NSROOT.NET" -i /data/1/amlccbtk/config/pipa.txt -f "/tmp/sel_auth.hql"
+
+    4-5 변수를 hql 파일에 전달 --hiveconf 
+        beeline -u "jdbc:hive2://bdicr101x05h2.apac.nsroot.net:10000/default;principal=hive/bdicr101x05h2.apac.nsroot.net@KRUXDEV.DYN.NSROOT.NET" -hiveconf schema_name=default -hiveconf table_name=partition_tab -f "/tmp/sel_auth.hql"
+	
+
+       use ${hiveconf:schema_name};
+       select * from ${hiveconf:view_name} a ${hiveconf:where_con};
+
+
+
+	    hql 파일 내용
+		use ${hiveconf:schema_name};
+		INSERT INTO TABLE ${hiveconf:pipa_tab} PARTITION
+		  ( 
+		  ${hiveconf:part_key}
+		  )
+		select * from ${hiveconf:view_name} a ${hiveconf:where_con};
+	
+		beeline "jdbc:hive2://bdicr101x05h2.apac.nsroot.net:10000/default;principal=hive/bdicr101x05h2.apac.nsroot.net@KRUXDEV.DYN.NSROOT.NET" 
+
+		
+    5. TYPE
+
+ NUMBER
+
+   TINYINT  : 1BYTE(2^8=256) 정수 -128~128
+
+   SMALLINT : 2BYTE(2^16=65536) 정수 -32768~32767
+
+   INT      : 4BYTE(2^32) 정수
+
+   BIGINT   : 8BYTE(2^64) 정수
+
+   FLOAT    : 4BYTE 소수
+
+   DOUBLE   : 8BYTE 소수
+
+
+ DATE
+   DATE
+   TIMESTAMP
+   
+	date, timestamp insert 문으로 입력시 에는 모두 싱글쿼테이션('')으로 감싸 줘야한다.
+	date, timestamp select 문으로 조회시 에는 모두 싱글쿼테이션('')으로 감싸 줘야한다.
+
+	insert into type_test values('kang', '2016-01-02', '2016-02-02 02:02:12', 45,45.66);
+
+	- 아래 구분의 에러 발생
+	  insert into type_test values('kang', '2016-01-02', 2016-02-02 02:02:12, 45,45.66);
+	  
+	비교시에도 싱글쿼테이션('')으로 감싸 줘야한다.안그러면 에러 발생
+	  select * from type_test where timps_col='2016-02-02 02:02:12';
+
+	double 	''로 입력하면 null 입력됨(검색은 is null로 만 검색됨, 컬럼명=''로 검색시 검색안됨)
+	decimal 	''로 입력하면 null 입력됨(검색은 is null로 만 검색됨, 컬럼명=''로 검색시 검색안됨)
+
+	decimal 	default는 10,0 자리임 소수부를 입력하고 싶으면 필히 소수부를 지정해야 함.
+				소수부 자릿수 overflow의 경우 정의된 소수자릿에서 4사5입됨
+				
+	decimal 	정수부 자릿수 overflow의 경우 null로 입력됨
+
+	char	자릿수 overflow의 경우 정의된 자릿수 까지만 잘려서 입력됩니다.
+
+	string 	자릿수 지정할 수 없음   
+   
+   
+6. 데이터베이스 생성   
+
+	6-1. HDFS DB location 생성 
+	     owner는 db 오너로 지정
+	hdfs dfs -mkdir -p '/data/amlccsgk/work/hive/L4_amlccsgk'
+	hdfs dfs -chown -R  amlccsgk:amlccsgk '/data/amlccsgk/'
+	hdfs dfs -chmod -R 755 '/data/amlccsgk/'
+
+	6-2 beeline에 접속하여 데이터베이스 생성. 
+	hdfs로 create
+	create database amlcck_dm location '/data/amlccbtk/work/hive/amlcck_dm'
+   
+   
+7. 테이블의 생성
+CREATE TABLE dim_account_cc(
+   acc_uuid varchar(50),
+   acc_eap_id bigint,
+   cust_eap_id bigint,
+   acc_eap_unique_id varchar(100),
+   cust_eap_unique_id varchar(100)
+   ...............................
+ PARTITIONED BY (
+   region_code varchar(10),
+   country_code varchar(10),
+   product_code varchar(100),
+   business_product_type varchar(100),
+   eap_as_of_dt varchar(10),
+   eap_load_id int)
+   -- Serializer/deserializer의 약어이다.
+   -- 데이터의 포멧에 따라 지정해야 한다.(csv, avro, json)
+   -- 하이브가 사용할수 있는 레코드로 변환하는 역할을 하는 모듈로
+   -- java로 구현되어 있다.
+   -- 특별히 지정을 하지 않으면 아래의 serde를 사용하게 된다.
+   -- 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe'
+ ROW FORMAT SERDE
+   'org.apache.hadoop.hive.serde2.columnar.ColumnarSerDe'
+ STORED AS INPUTFORMAT
+   -- RCFile은 클라우데라에 의해 개발된 하이브에서 사용하는 파일 포멧이다.
+   -- ORC는 호튼웍스에서 개발된 파일 포멧.
+   -- transactional 테이블을 사용하려면 ORC를 사용해야 한다.
+   -- ORC를 사용하면 클라우데라에서 기술지원을 받을수 없게 된다.
+    'org.apache.hadoop.hive.ql.io.RCFileInputFormat'
+ OUTPUTFORMAT
+   'org.apache.hadoop.hive.ql.io.RCFileOutputFormat'
+ LOCATION
+   'hdfs://koreadev/data/amlccdwk/work/hive/amlccdwk/dim_account_cc'
+ TBLPROPERTIES (
+   'transient_lastDdlTime'='1508234954')   
+   
+
+	create table type_test
+	( str_col string,
+	  date_col date,
+	  timps_col timestamp,
+	  dec_col decimal,
+	  dec2_col decimal(10,5)
+	 )
+	--default 구분자는 | 이다.
+	row format delimited fields terminated by ',';   
+	
+8. 테이블의 생성 확인
+      show create table type_test;
+	- 실제로 hive에 저장되는 DDL						
+	+----------------------------------------------------+--+
+	|                   createtab_stmt                   |
+	+----------------------------------------------------+--+
+	| CREATE TABLE `type_test`(                          |
+	|   `str_col` string,                                |
+	|   `date_col` date,                                 |
+	|   `timps_col` timestamp,                           |
+	|   `dec_col` decimal(10,0),                         |
+	|   `dec2_col` decimal(10,5))                        |
+	| ROW FORMAT SERDE                                   |
+	|   'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe'  |
+	| WITH SERDEPROPERTIES (                             |
+	|   'field.delim'=',',                               |
+	|   'serialization.format'=',')                      |
+	| STORED AS INPUTFORMAT                              |
+	|   'org.apache.hadoop.mapred.TextInputFormat'       |
+	| OUTPUTFORMAT                                       |
+	|   'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat' |
+	| LOCATION                                           |
+	|   'hdfs://koreadev/user/hive/warehouse/type_test'  |
+	| TBLPROPERTIES (                                    |
+	|   'COLUMN_STATS_ACCURATE'='false',                 |
+	|   'numFiles'='1',                                  |
+	|   'numRows'='-1',                                  |
+	|   'rawDataSize'='-1',                              |
+	|   'totalSize'='61',                                |
+	|   'transient_lastDdlTime'='1510635208')            |
+	+----------------------------------------------------+--+      
+	
+	
+8. view의 생성	
+	create view vw_pipa_l1_authorization_pipa as
+	select *
+	  from l1_nextgenk.authorization d 
+	 where d.cust_other in(select c.cust_other
+	from
+	(select a.cust_other
+	 from l1_nextgenk.authorization a
+	where a.cust_other in(select b.cust_no from pipa_key_table_initload b)	
+	
+9. 테이블의 복제
+create table amlccbtk_work.l1_transaction_new like l1_nextgenk.transaction;
+
+create table partition_tab_copy like partition_tab;
+
+------------------------------------------------------------------------------------
+
+10. managed, external 테이블 생성
+10-1 managed table
+	create table nonpartition_tab(
+	ID INT,
+	NAME STRING,
+	INSERTDATE timestamp,
+	year int,
+	month int)
+	row format delimited fields terminated by ','
+	LOCATION '/user/hive/warehouse/test2';
+   
+10-2 external table   
+- EXTERNAL 삭제를 해도 데이터는 삭제되지 않음
+- schema만 일치하면 바로 데이터가 로드된다.
+- hdfs 데이터가 테이블 컬럼수 보다 적으면 null로 채워진다.
+- hdfs 데이터와 테이블 컬럼의 type이 일치 하지 않아도 null로 채워진다.
+
+create external table partition_external_tab(
+ID INT,
+NAME STRING,
+INSERTDATE timestamp)
+PARTITIONED BY (year int, month int)
+row format delimited fields terminated by ','
+LOCATION '/user/hive/warehouse/partition_external_tab';
+	   
+   
+10-3. managed, external 속성변경, 파티션 삭제
+    - external 테이블의 데이터를 삭제를 하기 위해서는 아래 명령어를 통해 속성을 변경후
+	  파티션 삭제후 다시 'EXTERNAL'='TRUE'로 변경해 준다.
+alter table partition_external_tab SET TBLPROPERTIES('EXTERNAL'='FALSE');
+ALTER TABLE partition_external_tab DROP PARTITION (year=2013,month=3)
+alter table partition_external_tab SET TBLPROPERTIES('EXTERNAL'='TRUE');
+
+
+11. 파티션명 변경
+	
+	/*
+	아래명령어를 수행하면 파티션 로케이션 위치가 /테이블명/파티션명으로 변경된다.
+	*/
+
+	alter table partition_external_tab partition (year='2013',month='1') rename to partition (year='2013',month='5');
+	alter table partition_external_tab partition (year='2013',month='2') rename to partition (year='2013',month='6');
+	alter table partition_external_tab partition (year='2013',month='3') rename to partition (year='2013',month='7');
+	alter table partition_external_tab partition (year='2013',month='4') rename to partition (year='2013',month='8');
+
+	show partitions partition_external_tab ;
+	describe formatted partition_external_tab partition (year='2013',month='5');
+
+	위 까지만 해줘도 파티션은 자동 생성된다.
+	alter table partition_external_tab partition (year='2013',month='5') set location 'hdfs://koreadev/user/hive/warehouse/partition_external_tab/year=2013/month=5';
+
+
+12. 데이터베이스 이동
+ use default:
+
+   
+13. show 명령어   
+
+   show databases; 
+   show databases like "l1*";
+   show schemas;
+   show schemas like "l1*";
+   show tables;
+   show tables like "auth*";
+   show tables in amlccbtk_work like 'vw*'
+   show functions;
+   show create tables partition_external_tab ;
+   show roles;
+   show current roles;
+   show grant role [role명];
+   show role grant group [그룹명];
+   show partitions authorization;
+   
+   
+14. describe 명령어
+   describe database [테이블명];
+    - role 까지 표시됨
+   describe database extended [데이터베이스명];
+    - role 까지 표시됨
+    
+   describe partition_external_tab;--테이블 정보표시
+   describe default.partition_external_tab;--다른데이터베이스에 있을때 db명을 적어줘서 use 명령어(db 이동) 없이 바로 실행가능
+   describe extended default.partition_external_tab;
+   describe formatted default.partition_external_tab
+   describe [테이블명].[array column];
+   describe extended partition_tab partition(year='2013',month='1');
+   
+   
+15. ALTER TABLE
+	테이블 명 변경
+	ALTER TABLE old_table_name RENAME TO new_table_name;
+        ex) ALTER TABLE partition_tab RENAME TO partition_table;
+
+	테이블 컬럼명 변경(모든 컬럼을 명시해 주지 않으면 명시된 테이블 외의 컬럼이 모두 삭제됨)
+	alter table time_test replace columns(id string, name string, insert_date string);
+
+
+16 테이블 컬럼 추가
+	ALTER TABLE partition_table ADD COLUMNS (c1 int, c2 string);
+	아래와 같은 에러가 발생하는데 이유를 찾아 볼것
+
+
+17. 테이블 생성후 로컬에 저장된 데이터 로드
+   방법1 hdfs dfs -put
+   
+        테이블 생성후 테이블 로케이션에 hdfs dfs -put으로 데이터 입력시에는 
+        테이블 컬럼 delimeter와 실제데이터 delimeter가 일치하지 않으면 모두 null 입력된다.
+        hive의 디폴트 delimeter는 파이프이다.(default: |)
+		
+	hdfs 데이터를 삭제하면 테이블 데이터도 모두 삭제 된다.
+
+   방법2( hiveserver2가 설치된 서버의 filesystem의 경로를 지정해 줘야한다.)
+         Load data local inpath '/tmp/type.txt' overwrite into table partition_tmp;
+
+   방법3 Hive 테이블의 스키마 복제
+         create table docs_2 as
+         select * from docs;		 
+
+18. 파티션 테이블 생성방법
+	create external table test_partition(
+	ID INT,
+	NAME STRING,
+	INSERTDATE timestamp)
+	PARTITIONED BY (year int, month int)
+	row format delimited fields terminated by ','
+	LOCATION '/user/hive/warehouse/test_partition';
+
+19. 파티션 추가 방법
+	
+	alter table test_partition add partition(year=2013,month=1) 
+	 location 'hdfs://koreadev/user/hive/warehouse/test_partition/year=2013/month=1';
+
+ 
+20. 파티션 테이블에 Dynamic partition 생성 방법
+    
+ 
+20-1 : 파티션 테이블과 동일한 컬럼의 non파티션 테이블생성
+       non파티션 테이블 데이터 load data문을 이용하여 insert
+
+       파티션 모드를 nonstrict
+       set hive.exec.dynamic.partition.mode=nonstrict
+       non파티션 테이블에서 데이터 select한여 파티션 테이블 insert 하면 파티션이 자동 생성된다.
+       
+	
+	1,kangjh,2013-01-01 10:01:01,2013,1
+	2,kangjh,2013-01-02 10:01:12,2013,1
+	3,kangjh,2013-01-03 10:01:13,2013,1
+	4,kangjh,2013-01-04 01:01:04,2013,1
+	5,kangjh,2013-01-05 01:01:05,2013,1
+	6,kangjh,2013-01-06 01:01:06,2013,1
+	7,kangjh,2013-01-07 01:01:07,2013,1
+	8,kangjh,2013-01-08 01:01:08,2013,1
+	9,kangjh,2013-01-09 01:01:09,2013,1
+	10,kangjh,2013-01-10 01:01:10,2013,1
+	11,kangjh,2013-01-11 01:01:11,2013,1
+	12,kangjh,2013-01-12 01:01:12,2013,1
+	13,kangjh,2013-02-11 01:01:01,2013,2
+	14,kangjh,2013-02-11 01:01:02,2013,2
+	15,kangjh,2013-02-11 01:01:03,2013,2
+	16,kangjh,2013-02-11 01:01:04,2013,2
+	17,kangjh,2013-02-11 01:01:05,2013,2
+	18,kangjh,2013-02-11 01:01:06,2013,2
+	19,kangjh,2013-02-11 01:01:07,2013,2
+	20,kangjh,2013-02-11 01:01:08,2013,2
+	21,kangjh,2013-02-11 01:01:09,2013,2
+	22,kangjh,2013-02-11 01:01:10,2013,2
+	23,kangjh,2013-02-11 01:01:11,2013,2
+	24,kangjh,2013-02-11 01:01:12,2013,2
+	25,kangjh,2013-03-11 01:01:01,2013,3
+	26,kangjh,2013-03-11 01:01:02,2013,3
+	27,kangjh,2013-03-11 01:01:03,2013,3
+	28,kangjh,2013-03-11 01:01:04,2013,3
+	29,kangjh,2013-03-11 01:01:05,2013,3
+	30,kangjh,2013-03-11 01:01:06,2013,3
+	31,kangjh,2013-03-11 01:01:07,2013,3
+	32,kangjh,2013-03-11 01:01:08,2013,3
+	33,kangjh,2013-03-11 01:01:09,2013,3
+	34,kangjh,2013-03-11 01:01:10,2013,3
+	35,kangjh,2013-03-11 01:01:11,2013,3
+	36,kangjh,2013-03-11 01:01:12,2013,3
+	37,kangjh,2013-04-11 01:01:01,2013,4
+	38,kangjh,2013-04-11 01:01:02,2013,4
+	39,kangjh,2013-04-11 01:01:03,2013,4
+	40,kangjh,2013-04-11 01:01:04,2013,4
+	41,kangjh,2013-04-11 01:01:05,2013,4
+	42,kangjh,2013-04-11 01:01:06,2013,4
+	43,kangjh,2013-04-11 01:01:07,2013,4
+	44,kangjh,2013-04-11 01:01:08,2013,4
+	45,kangjh,2013-04-11 01:01:09,2013,4
+	46,kangjh,2013-04-11 01:01:10,2013,4
+	47,kangjh,2013-04-11 01:01:11,2013,4
+	48,kangjh,2013-04-11 01:01:12,2013,4
+
+20-2 LOAD DATA 명령문
+	 다이나믹 파티션에 사용할 수 없다.
+	 아래처럼 파티션을 지정해서 사용해야 한다.
+	 아래 명령어는 지정된 파티션에 모든 데이터가 입력된다.
+		LOAD DATA INPATH '/tmp/type.txt' into table partition_tmp
+		partition(year=2013,month=1);
+
+20-3 다이나믹 파티션 테이블에 데이터 생성절차
+
+20-3-1 non-partition 테이블 생성
+	
+	CREATE TABLE `partition_tmp`(
+	  `id` int,                  
+	  `name` string,             
+	  `insertdate` timestamp,    
+	  `year` int,                
+	  `month` int)
+	row format delimited fields terminated by ',';
+
+20-3-2 non-partition 테이블 로케이션에 hdfs dfs -put  
+       hdfs dfs -put /tmp/type.txt /user/hive/warehouse/partition_tmp/
+       - timestamp 컬럼 입력시 싱글 쿼테이션이 있으면 null로 입력이 된다.
+	   
+20-3-3 partition 테이블 생성
+		create table partition_tab(
+		ID INT,
+		NAME STRING,
+		INSERTDATE timestamp)
+		PARTITIONED BY (year int, month int)
+		row format delimited fields terminated by ',';
+
+20-3-4 partition 테이블 데이터 insert
+       -파티션 컬럼은 제일 마지막에 지정해야 한다.
+       set hive.exec.dynamic.partition.mode=nonstric
+       insert into partition_tab partition(year,month) select id,name,INSERTDATE,year,month from partition_tmp;  
+
+20-3-5 정적 파티션과 다이나믹 파티션을 병행해서 사용 데이터 load 방법(실행 안됨)
+		 Cannot insert into target table because column number/types are different 'month': 
+		 Table insclause-0 has 4 columns, but query has 5 columns. (state=42000,code=10044)
+
+		 insert into partition_tab partition(year=2013,month) select id,name,INSERTDATE,year, month from partition_tmp; 
+
+21. 테이블 파티션 삭제
+    alter table partition_tab drop partition(month=4);
+	- external 테이블의 경우 파티션 삭제를 해도 hdfs 데이터 는 삭제 되지 않음
+	  하지만 select 문에서는 조회되지 않음
+	  다시 테이블을 생성하면 그대로 데이터가 존재하기 때문에 조심해야 한다.
+	- external 테이블의 데이터까지 삭제를 하려면 아래 명령어로
+	  변경한 후에 파티션을 삭제 해야한다.
+      alter table partition_tab set tblproperties('EXTERNAL'='false');	
+
+22. Append와 overwrite차이점
+    insert into [테이블명] : 데이터를 append한다.
+    insert overwrite table [테이블명] : 데이터를 truncate, insert한다.
+
+	 
+23.	테이블 삭제 drop
+	DROP TABLE pv_users;
+	- external 테이블의 경우 파티션 삭제를 해도 hdfs 데이터 는 삭제 되지 않음
+	  다시 테이블을 생성하면 그대로 데이터가 존재하기 때문에 조심해야 한다.
+
+--------------------------
+24 실행계획
+
+24-1 실행계획(EXPLAIN) 출력
+	EXPLAIN SELECT COUNT(*) FROM partition_tab
+	WHERE year = 2013 AND month = 1
+
+24-2 실행계획(EXPLAIN) & 물리적 파일 정보(EXTENDED)
+	EXPLAIN EXTENDED SELECT COUNT(*) FROM partition_tab
+	WHERE year = 2013 AND month = 1
+
+
+25.	Local의 csv 파일 hive 테이블에 로드
+    csv 파일은 hive 가 설치된 서버에 있어야한다. (proxy에서 작업시 작업 안됨)
+    Load data local inpath ‘/home/cdhuser/test_data.csv’ overwrite into table test_table;
+
+	**위의 overwrite의 개념은 drop & insert의 개념이다.
+	  overwrite 키워드가 없으면 append 개념이다.
+	  로컬 데이터 파일을 hdfs에 put 시킨다.
+	  경로는 싱글 쿼테이션으로 막아준다.
+  
+26.	Hive 테이블의 스키마 복제
+    - like 와는 달리 데이터 까지 복제 된다.
+	create table partition_tab2 as
+	select * from partition_tab;
+
+27.	Hive select 데이터를 로컬파일시스템에 저장하기
+    파일은 hive 가 설치된 서버에 생성된다. (proxy에 생성안됨.)
+INSERT OVERWRITE LOCAL DIRECTORY '/tmp/type_data.txt'
+SELECT * from partition_tab;
+
+28.	 SELECT … INSERT(특정 파티션에 데이터 insert)
+	 FROM air_histroy_copy pvs
+	 INSERT OVERWRITE TABLE page_view PARTITION(dt='2008-06- 08', country='US')
+	SELECT pvs.viewTime, pvs.userid, pvs.page_url, pvs.referrer_url, null, null, pvs.ip
+	WHERE pvs.country = 'US';
+
+29.	Hive가 지원하는 내장 함수 보기
+	** hive CLI에서 탭키를 누를 후 Y를 입력한다.
+	Display all 469 possibilities? (y or n) y
+
+30.	Hive date, timestamp 컨트롤
+	- 현재 timestamp 가져오기
+	  select current_timestamp();
+	- 전월, 다음월 가져오기 
+	  select add_month(current_timestamp(),-1); // -1 : 전월 1: 다음월
+	- 전일, 다음일 가져오기
+	  select date_add(urrent_timestamp(),-1) //-1 : 전일 1: 다음일
+	- timestamp에서 날짜만 추출
+	  cast(timestamp as date)
+	- String을 데이트로 변환(to_Date)
+	  cast(string as date) => select cast('2016-07-31' as date);
+	  포멧이 일치하지 않으면 null을 반환한다.
+	- Date를 timestamp로 변환
+	  cast(date as timestamp) => select cast(current_date() as timestamp);
+	  2016-07-13 00:00:00
+	- Date를 String으로 변환
+	  cast(sting as date)
+	- timestamp에서 년,월,일 추출
+	  year(current_timestamp()), month(current_timestamp()), day(current_timestamp())
+	- timestamp에서 시간, 분, 초 추출
+	  hour(current_timestamp()), minute(current_timestamp()), second(current_timestamp())
+	- 두 날짜의 차이를 일자로 반환
+	 DATEDIFF('2000-03-01', '2000-01-10')
+	- 지정한 날짜 추출
+	  DATE_SUB('2016-07-01', 5) returns ‘2016-06-25’ //5일전을 추출
+	  DATE_SUB('2000-07-01', -5) returns ‘2016-07-06’ //5일후를 추출
+
+31.	hive에서 Decimal 사용하기
+	create table dec_test(
+	a decimal, --default to decimal(10,0)
+	b.decimal(10,5) -- 전체 10자리 중 정수부 5자리 소수부 5자리
+	)
+	** 정수부가 overflow가 발생하면 null로 입력되고
+	   소수부는 소수부 자릿수 만큼만 들어가는데 사사오입되서 들어간다.
+	** 최대 38자리까지 입력 가능하다.
+	
+32.	Hive에서 varchar 사용하기
+	create table varchar_test (a varchar2);
+	** 최대 65355 자리까지 사용가능하다.
+
+
+33.	Order by와 Sort By의 차이점
+	- Order by는 MapReduce의 전체 정렬
+	- Sort By는 MapReduce의 파티션 정렬로 코드를 생성합니다.
+	- 동일해 보이지만 하나 이상의 리듀스 타스크가 실행되면 정렬 순서가 달라질 수 있습니다.
+	-Order by는 많은 리소스를 사용하기 때문에 실행 시 hive.mapred.mode가 strict로 설정되어 있으면 오류가 발생하면서 limit절을 요구합니다.
+	
+34.	Sort by와 함께 사용하는 distributed by
+    MapReduce의 파티셔너와 동일한 역할을 한다.
+    동일한 키값에 대해 같은 리듀서로 보내는 것을 보장하기 위해 distributed by를 사용한다. 
+	그리고 원하는 리듀서별로 데이터를 정렬하기 위해서 sort by를 사용한다.
+    리듀스가 처리할 로우를 제어한다는 점에서 Group by와 비슷한 역할을 한다.
+	
+Ex) Select s.ymd, s.symbol, s.price_close
+    from stocks s
+    distributed by s.symbol --같은 symbol은 같은 리듀서로 보낸다.
+    sort by s.symbol asc, s.ymd asc; -- 같은 리듀서 내에서 소트를 한다.
+	
+35.	Sort by + distributed by를 대체하는 cluster by
+    Sort by절과 distributed by절에 동일한 컬럼을 사용한고 
+	sort by가 오름차순인 경우는  cluster by로 대체할 수 있다.
+	
+ex) Select s.ymd, s.symbol, s.price_close
+    from stocks s
+   distributed by s.symbol 
+   sort by s.symbol asc
+   
+ 아래 쿼리로 대체할 수 있다.
+	Select s.ymd, s.symbol, s.price_close
+		from stocks s
+	   cluster by s.symbol asc
+	   
+34.	Windowing and Analytics Functions
+	 sum(arrDelay) over(partition by year, month)
+	 count(arrDelay) over(partition by year, month)
+	 COUNT(DISTINCT a) OVER (PARTITION BY c)
+	 오라클에서 지원하는 분석 함수 대부분 지원 
+	 rank, dense_rank, ROW_NUMBER(), lag, lead, first_value, last_value, PERCENT_RANK, 
+	 NTILE, CUME_DIST
+	아래 링크 참조
+	https://cwiki.apache.org/confluence/display/Hive/LanguageManual+WindowingAndAnalytics
+
+
+35.	Common Table Expression(with 절)
+  with q1 as ( select key from src where key = '5')
+  select *
+  from q1;
+ 
+
+
+36. msck repair table
+   hdfs의 테이블 경로에 파티션 디렉토리를 생성한 경우는
+   위의 명령어를 통해 파티션을 생성할 수 있다.
+   메터스토어와 hdfs 디렉토리를 일치 시켜주는 역할을 한다.
+   
+   
+37.	Hive trnasactional table의 사용.
+
+
+	#하이브 테이블에서 update를 사용하기 위해서는 
+	 hive cofiguration변경과 테이블 create시 store format을 orc 포멧을로 생성하고
+	TBLPROPERTIES항목에 ('transactional'='true'); 로 생성해 줘야한다.
+
+
+	 create table update_test(
+	  cust_no string, 
+	  cust_type string,
+	  month_end_date string)
+	clustered by (cust_no) into 2 buckets 
+			 stored as orc TBLPROPERTIES('transactional'='true');
+	;
+
+	#하이브 update 테이블에서 update;
+	hive -e "set hive.auto.convert.join.noconditionaltask.size = 10000000; set hive.support.concurrency = true; set hive.enforce.bucketing = true; set hive.exec.dynamic.partition.mode = nonstrict; set hive.txn.manager = org.apache.hadoop.hive.ql.lockmgr.DbTxnManager; set hive.compactor.initiator.on = true;
+	set hive.compactor.worker.threads = 2 ; use default; update update_test set cust_type='C' where cust_no='HHH';"
+
+	#하이브 update 테이블에서 update 결과 확인;
+
+	hive> select * from update_test;
+	OK
+	kang    P       20170101
+	ggg     P       20170102
+	HHH     C       20170103
+
+	
+#######################################
+oiv 사용법
+########################################
+	
+	
+클러스터에 작은 파일의 존재를 확인하려면 다음 단계를 수행하십시오.
+
+Hadoop OIV는 관리자가 사람이 읽을 수없는 hadoop 네임 스페이스 fsimage를 분석 할 수있게합니다.
+
+fsimage 분석에 도움이되는 일부 프로세서는 다음과 같습니다.
+ls : lsr 명령과 유사합니다. 디렉토리, 권한, 복제, 소유자 그룹, 파일 크기, 수정 날짜 및 경로로 구성됩니다.
+
+들여 쓰기 :이 프로세서는 이미지 버전, 생성 시간 스탬프, 노드 및 블록 세부 정보를 포함하는 출력을 구성하는 들여 쓰기 된 양식을 사용합니다.
+
+Delimited : 경로, 복제, 수정 시간, 액세스 시간, 블록 크기, 블록 수, 파일 크기, 네임 스페이스 할당량, 디스크 공간 할당량, 사용 권한, 사용자 이름 및 그룹 이름과 같은 세부 정보를 포함하는 탭으로 구분 된 프로세서 출력입니다.
+
+XML : lsr과 비슷한 세부 정보를 출력하는 XML 기반 프로세서입니다.
+
+FileDistribution : 파일 크기에 따라 파일 수를 버킷 팅하는 것을 기반으로하는 프로세서입니다. 파일 크기 범위에 속하는 파일은 함께 그룹화되어 집계됩니다.
+
+다음은 ls 프로세서를 사용하여 OIV를 사용하여 작은 파일의 수를 분석하는 프로세스입니다.
+1. FSImage 다운로드 :
+
+네임 노드의 dfs.name.dir 위치에서 fsimage _ #######를 다운로드하십시오.
+
+2. FSImage로드 :
+
+FS 이미지를 복사 한 노드에서. 아래 명령을 실행하십시오.
+
+OIV 처리는 메모리가 많이 필요합니다. FSImage의 크기에 따라 JVM 값을 늘리십시오.
+
+2 단계가 끝나면 읽기 전용 WebHDFS API를 제공하는 웹 서버가 있습니다.
+
+export HADOOP_OPTS=“-Xms<HighValue>m -Xmx<HighValue>m $HADOOP_OPTS"
+nohup hdfs oiv -i fsimage_####### -o fsimage_#######.txt &
+3. "ls -R"보고서 생성 :
+
+nohup hdfs dfs -ls -R webhdfs://127.0.0.1:5978/ > /data/home/hdfs/lsrreport.txt &
+4. 생성 된 보고서에 대한 하이브 스키마 만들기 :
+
+add jar /usr/hdp/current/hive/lib/hive-contrib.jar;
+CREATETABLE lsr (permissions STRING, replication STRING, owner STRING, ownergroup STRING, size STRING, fileaccessdate STRING, time STRING, file_path STRING ) ROW FORMAT SERDE 'org.apache.hadoop.hive.contrib.serde2.RegexSerDe' WITH SERDEPROPERTIES ("input.regex" = "(\\S+)\\s+(\\S+)\\s+(\\S+)\\s+(\\S+)\\s+(\\S+)\\s+(\\S+)\\s+(\\S+)\\s+(.*)"); 
+load data inpath ‘/data/home/hdfs/lsrreport.txt’ overwrite into table lsr;
+create view lsr_view as select (case substr(permissions,1,1) when 'd' then 'dir' else 'file'end) as file_type,owner,cast(size as int) as size, fileaccessdate,time,file_path from lsr;
+5. 1MB 미만의 파일을 확인하십시오.
+
+select relative_size,fileaccessdate,file_path as total from (select (case size < 1048576 when true then 'small' else 'large' end) as relative_size,fileaccessdate,file_path from lsr_view where file_type='file') tmp where relative_size='small' limit 100;
+링크 : http://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-hdfs/HdfsImageViewer.html
+
+파티션의 파일 연결
+ALTER TABLE [table] PARTITION([partition]) CONCATENATE;
+ALTER TABLE [table] PARTITION([partition]) CONCATENATE;
+최상의 솔루션은 여러 개의 작은 파일을 제거하기 위해 선택 삽입을 수행하는 것입니다.
+
+   
+
