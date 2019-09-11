@@ -1,0 +1,843 @@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@ pyspark 정리
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+spark 실행하려면 cloudera-scm으로 로긴후 hive 티켓을 받은후 spark로 실행해야함.
+
+##############################################################
+# pyspark job 제출 예제
+##############################################################
+spark-submit --master yarn \
+             --deploy-mode client \
+			 --executor-memory 1g \
+			 --name wordcount \
+			 --conf "spark.app.id=wordcount" \
+			 --wordcount.py /tmp/nba.txt 2  
+
+##############################################################
+# wordCounts
+##############################################################		
+lines=sc.textFile("/tmp/nba.txt")
+lines.take(3)
+#아래처럼 한줄이 리스트 원소 한개
+[u'The first query shows that Curry makes, on average, more three-pointers than anyone in the history of the NBA. ', 
+ u'The second query shows that Joe Hassett had the best three-point shooting season in 1981, ', 
+ u'as compared to the rest of the league, in the history of the NBA. Curry doesnven rank in the top 10. (He barely misses it, coming in at 12th.) ']
+
+words_list=lines.flatMap(lambda x: x.split(" "))
+words_list.take(10)
+#단어가 리스트 원소 한개
+[u'The', u'first', u'query', u'shows', u'that', 
+ u'Curry', u'makes,', u'on', u'average,', u'more']
+
+one_list=words_list.map(lambda x : (x, 1))
+one_list.collect()
+#딕셔너리 형식으로 단어에 숫자 1을 붙임
+[(u'The', 1), (u'first', 1), (u'query', 1), (u'shows', 1), (u'that', 1), 
+ (u'Curry', 1), (u'makes,', 1), (u'on', 1), (u'average,', 1), (u'more', 1)]
+
+word_count=one_list.reduceByKey(lambda x, y: (x +y))
+word_count.take(5)
+#단어별로 횟수를 합함
+[(u'', 6), (u'1981,', 2), (u'shot', 1), (u'is', 2), (u'rest', 1)]
+
+#키값으로 소트 asc
+sorted = word_count.sortByKey()
+
+#키값으로 소트 desc
+sorted = word_count.sortByKey(false)			 
+			 
+##############################################################
+# 다양한 자료 타입에 대한 aggregate
+##############################################################	
+people = []
+people.append({'name':'Bob', 'age':45,'gender':'M'})
+people.append({'name':'Gloria', 'age':43,'gender':'F'})
+people.append({'name':'Albert', 'age':28,'gender':'M'})
+people.append({'name':'Laura', 'age':33,'gender':'F'})
+people.append({'name':'Simone', 'age':18,'gender':'T'})
+peopleRdd=sc.parallelize(people)
+len(peopleRdd.collect())
+seqOp = (lambda x,y: (x[0] + y['age'],x[1] + 1))
+combOp = (lambda x,y: (x[0] + y[0], x[1] + y[1]))
+peopleRdd.aggregate((0,0), seqOp, combOp)
+seqOp = (lambda x,y: (x[0] + y[2],x[1] + 1))
+userRdd.aggregate((0,0), seqOp, combOp)
+
+
+csv 데이터에 movie user data에 적용
+user_lines = sc.textFile("/tmp/users.dat")
+user_data=user_lines.map(lambda x: x.split("|"))  
+#아래에서 int(y[2])를 쓴이유는 age 가 3번째 인덱스고 문자열 타입이라 형변환이 필요한다.
+seqOp = (lambda x,y: (x[0] + int(y[2]),x[1] + 1))
+combOp = (lambda x,y: (x[0] + y[0], x[1] + y[1]))
+user_data.aggregate((0,0), seqOp, combOp)
+
+
+# aggregate로 평균구하기
+>>> rdd=sc.parallelize([1,2,3,4,5,6,7,8,9,10])
+>>> sumCount=rdd.aggregate((0,0),(lambda acc, value: (acc[0] + value, acc[1] + 1)), (lambda acc1, acc2:(acc1[0] + acc2[0], acc1[1] + acc2[1])))
+>>> print sumCount
+(55, 10)			 
+>>> print sumCount[0] / float(sumCount[1])
+5.5
+
+##############################################################
+# fold를 이용한 평균구하기
+##############################################################	
+>>> rdd=sc.parallelize([1,2,3,4,5,6,7,8,9,10])
+>>> sumCount = rdd.map(lambda x: (x, 1)).fold((0, 0), (lambda x, y: (x[0] + y[0], x[1] + y[1])))
+>>> print sumCount[0] / float(sumCount[1])
+5.5
+
+##############################################################
+# reduce를 이용한 평균구하기
+##############################################################
+>>> rdd=sc.parallelize([1,2,3,4,5,6,7,8,9,10])
+>>> sumCount=rdd.map(lambda x: (x, 1)).reduce(lambda x, y: (x[0] + y[0], x[1] + y[1]))
+>>> print sumCount[0] / float(sumCount[1])
+5.5
+
+##############################################################
+# pair RDD 평균구하기
+##############################################################
+
+rdd=sc.parallelize([('panda', 0),('pink', 3),('pirate', 3),('panda', 1),('pink', 4)])
+>>> avg_rdd=rdd.mapValues(lambda x: (x, 1))
+>>> avg_rdd.take(10)
+[('panda', (0, 1)), ('pink', (3, 1)), ('pirate', (3, 1)), ('panda', (1, 1)), ('pink', (4, 1))]
+>>> reduce_rdd=avg_rdd.reduceByKey(lambda x, y: (x[0] + y[0], x[1] + y[1]))
+>>> reduce_rdd.take(10)
+[('pink', (7, 2)), ('panda', (1, 2)), ('pirate', (3, 1))]
+
+##############################################################
+# pair RDD 평균구하기 함수
+##############################################################
+import sys
+from pyspark import SparkContext
+
+def basicAvg(nums):
+    """Compute the avg"""
+    sumCount = nums.map(lambda x: (x, 1)).fold((0, 0), (lambda x, y: (x[0] + y[0], x[1] + y[1])))
+    return sumCount[0] / float(sumCount[1])
+
+if __name__ == "__main__":
+    master = "local"
+    if len(sys.argv) == 2:
+        master = sys.argv[1]
+    sc = SparkContext(master, "Sum")
+    nums = sc.parallelize([1, 2, 3, 4])
+    avg = basicAvg(nums)
+    print avg
+
+
+
+##############################################################
+# 집합함수 distinct union intersection subtract
+##############################################################
+distinct()         : 유일한 값만 추출한다.
+>>>rdd = sc.parallelize([1,2,3,4,4,1,2])
+>>> rdd.distinct().collect()
+[2, 4, 1, 3]  
+
+union              : 데이터셋을 합한다.
+>>> rdd = sc.parallelize([1,2,3,4,4,1,2])
+>>> rdd2 = sc.parallelize([8,9,0])
+>>> rdd.union(rdd2).collect()
+[1, 2, 3, 4, 4, 1, 2, 8, 9, 0] 
+
+intersection       : 데이터셋의 교집합을 구한다.
+>>> rdd = sc.parallelize([1,2,3,4,4,1,2])
+>>> rdd2 = sc.parallelize([8,9,0])
+>>> rdd2 = sc.parallelize([8,9,0,1,4])
+>>> rdd2.intersection(rdd).collect()
+[4, 1] 
+
+subtract()         : 한 rdd에서 다른 rdd가 포함하는 원소를 삭제한다.
+>>> rdd.subtract(rdd2).collect()
+[2, 2, 3] 
+
+##############################################################
+# pair RDD
+# CSV 파일에서 키값과 나머지 컬럼을 분리 하는 방법
+##############################################################			 
+user_data=user_lines.map(lambda x: (x.split("|")[0],x.split("|")))			 
+			 
+####################################################################################
+# RDD 함수의 종류
+####################################################################################
+collect()     : RDD를 적용시킨 리스트를 반환한다.
+ex)
+lines=sc.textFile("/tmp/nba.txt")
+lines.collect()
+
+count()       : RDD 요소의 갯수를 반환한다.
+ex)
+words_lists=lines.flatMap(lambda x: x.split(" "))
+words_lists.collect()
+
+filter()      : RDD에서 참인 경우만 요소를 통과시켜 새로운 RDD 반환한다.
+ex)
+lines = sc.textFile("/tmp/users.dat")
+csv_data=lines.map(lambda x: x.split("|"))  
+csv_data.count()
+male_list=csv_data.filter(lambda x: x[1]=="M")
+
+first()       : RDD에서 첫번째 리스트의 값을 반환한다.
+                리스트에 들어있는 요소에 따라 type이 다른다.
+ex)				
+lines = sc.textFile("/tmp/users.dat")
+lines.first()				
+
+take()        : RDD에서 입력 파라메터 크기 만큼 리스트를 반환한다.
+ex)				
+lines = sc.textFile("/tmp/users.dat")
+lines.take(10)	
+
+reduce()      : RDD에서 결과값을 하나로 합쳐주는 역할을 한다.
+ex)
+male_list=csv_data.filter(lambda x: x[1]=="M")
+male_list.count()
+male_age_list=male_list.map(lambda x: int(x[2]))
+male_total=male_age_list.reduce(lambda x,y: x + y)
+
+sortByKey()   : key:value 구조에서 키값 기준으로 데이터를 소트한다.
+                key:value 구조가 아니면 사용할 수 없다.
+
+top()         : 원하는 갯수만큼 sort한 결과 값을 져온다.
+                -가  오름차순이다.
+ex)
+male_age_min =male_age_list.top(10,lambda s: +s)
+
+takeOrdered() : 원하는 갯수만큼 sort한 결과 값을 져온다.
+			    +가  오름차순이다.
+ex)
+male_age_min =male_age_list.takeOrdered(1,lambda s: +s)		
+#multifield orderby
+movie_count.takeOrdered(10, key=lambda x: (-1 * x[0],x[1]))		
+				
+takeSample()  :  random한 요소를 반환한다.
+ex)
+male_age_sample =male_age_list.takeSample(withReplacement=True, num=6, seed=1000)
+male_age_sample =male_age_list.takeSample(True, 6, 1000)
+
+countByValue():  값별로 갯수를 반환한다.
+flatMap()     : map 함수가 수행될때 때때로 list나 튜플 형태로 반환될 때가 있다.
+                list안의 값을 모두 나열하여 새로운 RDD를 구성하기를 원할때 사용한다.
+reduceByKey() : pair RDD를 이루고 있는 경우 적용이 가능하다
+                key값을 기준으로 셔플이 하고 이를 합산을 해준다.
+groupByKey()      :  pair RDD를 이루고 있는 경우 적용이 가능하다
+                     key, value값을 기준으로 셔플이 하고 합산을 해준다.
+				     key가 같은데 value가 다르면 불필요한 셔플이 일어나
+				     네트웍, 메모리에 부하를 준다.
+				     같은 키값이 많은 경우 oom이 발생할 수 있다.
+cache() 함수      : RDD를 메모리에 상주시키는 역할을 한다.
+
+persist()         : RDD를 메모리에 상주시키는 역할을 한다.
+
+unpersist()       : 메모리에서 해당 데이터를 제거
+
+toDebugString()   : 현재 생성된 RDD의 정보를 보여준다.
+                  (2) male_age_listRDD PythonRDD[12] at RDD at PythonRDD.scala:43 [Memory Serialized 1x Replicated]
+                  |  /tmp/users.dat MapPartitionsRDD[8] at textFile at NativeMethodAccessorImpl.java:-2 [Memory Serialized 1x Replicated]
+                  |  /tmp/users.dat HadoopRDD[7] at textFile at NativeMethodAccessorImpl.java:-2 [Memory Serialized 1x Replicated]
+getStorageLevel() : RDD가 현재 어느위치에 저장되어 있는지(메모리 or 디스크)를 보여준다.
+                    Memory Serialized 1x Replicated 
+					
+union()           : 두개의 RDD를 합할대 사용한다.
+
+getNumPartitions(): RDD의 현재 파티션의 수를 알아볼때 사용
+
+repartition()     : 대형 파티션에서 데이터 필터링 후 불필요한 셔플을 방지하기 위해
+                    파티션의 수를 줄이는데 사용합니다.
+					
+coalesce()        : 대형 파티션에서 데이터 필터링 후 불필요한 셔플을 방지하기 위해
+                    파티션의 수를 줄이는데 사용합니다.
+					repartition의 최적화된 버전입니다.
+
+					
+
+
+
+
+####################################################################################
+# pyspark 특정 컬럼의 합계 count min max
+####################################################################################
+lines = sc.textFile("/tmp/users.dat")
+csv_data=lines.map(lambda x: x.split("|"))  
+csv_data.count()
+#성별 남자의 나이의 합계
+male_list=csv_data.filter(lambda x: x[1]=="M")
+male_list.count()
+male_age_list=male_list.map(lambda x: int(x[2]))
+male_total=male_age_list.reduce(lambda x,y: x + y)
+
+#성별 여자의 나이의 합계
+female_list=csv_data.filter(lambda x: x[1]=="F")
+female_list.count()
+female_age_list=female_list.map(lambda x: int(x[2]))
+# 아래와 같이 reduce 또는 fold를 사용할 수 있다.
+female_total=female_age_list.reduce(lambda x,y: x + y)
+female_fold_total = female_age_list.fold(0, (lambda x, y: x + y))
+
+female_fold_total = female_age_list.fold(0,add)
+
+>>> rdd=sc.parallelize([("a",1),("b",2),("a",2)])
+>>> from operator import add
+>>> sorted(rdd.foldByKey(0,add).collect())
+[('a', 3), ('b', 2)]
+
+#성별 남자의 나이의 평균
+#합산한 후 모수를 나눠주기위해 갯수도 같이 구한다.
+male_age_sum = male_age_list.map(lambda x: (x, 1))
+male_age_sum_cnt=male_age_sum.fold((0, 0), (lambda x, y: (x[0] + y[0], x[1] + y[1])))
+male_age_sum_cnt[0] / float(male_age_sum_cnt[1])
+
+#first와 take
+#first와 take는 RDD가 얼마나 파티션닝되었냐에 따라 결과 값이 달라진다.
+male_age_list
+
+
+#sort : takeOrdered, top ,sortByKey
+#sortByKey()는 key:value 구조가 아니면 사용할 수 없다.
+#top은 -가 오름차순이다.
+#takeOrdered +가 오름차순이다.
+# 아래는 male_age_list에서 1000개를 추출하여 내림차순으로 정렬한다.
+male_age_order =male_age_list.takeOrdered(1000,lambda s: -s)
+
+#MAX
+# 아래는 male_age_list에서 내림차순으로 정렬하므로 첫번째를 가져오면 max가 된다.
+male_age_max =male_age_list.takeOrdered(1,lambda s: -s)
+
+#MIN
+# 아래는 male_age_list에서 오름차순으로 정렬하므로 첫번째를 가져오면 min 된다.
+male_age_min =male_age_list.takeOrdered(1,lambda s: +s)
+
+#TOP N
+# 아래는 male_age_list에서 내림으로 정렬하므로 위서 부터 10개를 구하면 TOP 10이된다.
+male_age_min =male_age_list.takeOrdered(10,lambda s: -s)
+
+#takeSample
+male_age_sample =male_age_list.takeSample(withReplacement=True, num=6, seed=1000)
+
+#cache()
+male_age_list.setName("male_age_listRDD")
+male_age_list.cache()
+print male_age_list.is_cached
+
+#toDebugString() 
+print male_age_list.toDebugString()
+
+#getStorageLevel() 
+print male_age_list.getStorageLevel()
+4|Citi Revolving Cards|||072456447|0029064440500|4743604020611698|0029064440500|0|090828|2016-04-01|6000|6000|KRW||KOR|Korea, Republic of||N||N||2016040109082847436040206116980000000742950|鍮檣곕㏏?痢腎ㅺ뎄紳ㅻ|竊竊踰吏||||||100180||00074295|A|2016040109082847436040206116980000000742950||||||072456447||||||||||||||APR|2016-04-30|HCAS|||
+####################################################################################
+# pyspark SQLContext 사용하여 분석하기
+####################################################################################
+
+from pyspark.sql import SQLContext
+from pyspark.sql import Row
+from time import time 
+sqlContext = SQLContext(sc)
+
+lines= sc.textFile("/tmp/users.dat")
+
+lines= sc.textFile("/tmp/AMLCARDS_HCAS_AUTHORIZATION_20160430_20170427.DAT")
+lines= sc.textFile("file:///tmp/ttt.txt")
+lines= sc.textFile("file:///tmp/ggg.txt")
+csv_data = lines.map(lambda l: l.split("|"))
+csv_data = lines.map(lambda l: l.split(","))
+row_data = csv_data.map(lambda p: Row(id=int(p[0]),     
+                                      gender=p[1],    
+									  age=int(p[2]),    
+									  zipcode=p[3]    
+									  )
+						)
+row_data = csv_data.map(lambda p: Row(test=p[1]))	
+auth_df=sqlContext.createDataFrame(row_data)				
+user_df=sqlContext.createDataFrame(row_data)
+
+#DF에 직접 SQL 날리기와 수행시간 계산
+start=time()
+user_df.select("id","gender").groupby("gender").count().show()
+elapsed= time()-start
+print "Query performed in %s seconds " % round(elapsed,3)
+
+#groupby 절에 나오는 컬럼은 select 절에 있어야 함.
+#user_df.select("age","gender").groupby("gender","age").count().show()
+user_df
+
+#아래처럼 테이블로 등록해서 사용할 수 도 있다.
+user_df.registerTempTable("users")
+auth_df.registerTempTable("auth")
+
+#SQL의 수행결과는 RDD이다.
+male_list=sqlContext.sql("""
+select * from users where gender="M"
+""")
+
+user_list=sqlContext.sql("""
+select * from users
+""")
+
+auth_list.show()
+
+user_list.show()
+
+
+male_list.show()
+
+#데이터 프레임의 구조를 볼 수 있다.
+user_df.printSchema()
+
+####################################################################################
+# pyspark
+# spark sql join
+####################################################################################
+from pyspark import SparkContext, SparkConf, HiveContext
+
+if __name__ == "__main__":
+
+  # create Spark context with Spark configuration
+  conf = (SparkConf().setMaster("local").setAppName("My app").set("spark.executor.memory", "1g"))
+  sc = SparkContext(conf = conf)
+  sqlContext = HiveContext(sc)
+  df_07 = sqlContext.sql("SELECT * from sample_07")
+  df_07.filter(df_07.salary > 150000).show()
+  df_08 = sqlContext.sql("SELECT * from sample_08")
+  tbls = sqlContext.sql("show tables")
+  tbls.show()
+  df_09 = df_07.join(df_08, df_07.code == df_08.code).select(df_07.code,df_07.description)
+  df_09.show()
+  df_09.write.saveAsTable("sample_09")
+  tbls = sqlContext.sql("show tables")
+  tbls.show()
+  
+####################################################################################
+# outliers 설정
+# www.dezyre.com 보고 정리 할것
+####################################################################################
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@spark scala 정리
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@  
+ spark 실행하려면 cloudera-scm으로 로긴후 hive 티켓을 받은후 spark로 실행해야함.
+
+##############################################################
+# pyspark job 제출 예제
+##############################################################
+spark-submit --master yarn \
+             --deploy-mode client \
+			 --executor-memory 1g \
+			 --name wordcount \
+			 --conf "spark.app.id=wordcount" \
+			 --wordcount.py /tmp/nba.txt 2  
+
+##############################################################
+# wordCounts
+##############################################################		
+lines=sc.textFile("/tmp/nba.txt")
+lines.take(3)
+#아래처럼 한줄이 리스트 원소 한개
+[u'The first query shows that Curry makes, on average, more three-pointers than anyone in the history of the NBA. ', 
+ u'The second query shows that Joe Hassett had the best three-point shooting season in 1981, ', 
+ u'as compared to the rest of the league, in the history of the NBA. Curry doesnven rank in the top 10. (He barely misses it, coming in at 12th.) ']
+
+words_list=lines.flatMap(lambda x: x.split(" "))
+words_list.take(10)
+#단어가 리스트 원소 한개
+[u'The', u'first', u'query', u'shows', u'that', 
+ u'Curry', u'makes,', u'on', u'average,', u'more']
+
+one_list=words_list.map(lambda x : (x, 1))
+one_list.collect()
+#딕셔너리 형식으로 단어에 숫자 1을 붙임
+[(u'The', 1), (u'first', 1), (u'query', 1), (u'shows', 1), (u'that', 1), 
+ (u'Curry', 1), (u'makes,', 1), (u'on', 1), (u'average,', 1), (u'more', 1)]
+
+word_count=one_list.reduceByKey(lambda x, y: (x +y))
+word_count.take(5)
+#단어별로 횟수를 합함
+[(u'', 6), (u'1981,', 2), (u'shot', 1), (u'is', 2), (u'rest', 1)]
+
+#키값으로 소트 asc
+sorted = word_count.sortByKey()
+
+#키값으로 소트 desc
+sorted = word_count.sortByKey(false)			 
+			 
+##############################################################
+# 다양한 자료 타입에 대한 aggregate
+##############################################################	
+people = []
+people.append({'name':'Bob', 'age':45,'gender':'M'})
+people.append({'name':'Gloria', 'age':43,'gender':'F'})
+people.append({'name':'Albert', 'age':28,'gender':'M'})
+people.append({'name':'Laura', 'age':33,'gender':'F'})
+people.append({'name':'Simone', 'age':18,'gender':'T'})
+peopleRdd=sc.parallelize(people)
+len(peopleRdd.collect())
+seqOp = (lambda x,y: (x[0] + y['age'],x[1] + 1))
+combOp = (lambda x,y: (x[0] + y[0], x[1] + y[1]))
+peopleRdd.aggregate((0,0), seqOp, combOp)
+seqOp = (lambda x,y: (x[0] + y[2],x[1] + 1))
+userRdd.aggregate((0,0), seqOp, combOp)
+
+
+csv 데이터에 movie user data에 적용
+user_lines = sc.textFile("/tmp/users.dat")
+user_data=user_lines.map(lambda x: x.split("|"))  
+#아래에서 int(y[2])를 쓴이유는 age 가 3번째 인덱스고 문자열 타입이라 형변환이 필요한다.
+seqOp = (lambda x,y: (x[0] + int(y[2]),x[1] + 1))
+combOp = (lambda x,y: (x[0] + y[0], x[1] + y[1]))
+user_data.aggregate((0,0), seqOp, combOp)
+
+
+# aggregate로 평균구하기
+>>> rdd=sc.parallelize([1,2,3,4,5,6,7,8,9,10])
+>>> sumCount=rdd.aggregate((0,0),(lambda acc, value: (acc[0] + value, acc[1] + 1)), (lambda acc1, acc2:(acc1[0] + acc2[0], acc1[1] + acc2[1])))
+>>> print sumCount
+(55, 10)			 
+>>> print sumCount[0] / float(sumCount[1])
+5.5
+
+##############################################################
+# fold를 이용한 평균구하기
+##############################################################	
+>>> rdd=sc.parallelize([1,2,3,4,5,6,7,8,9,10])
+>>> sumCount = rdd.map(lambda x: (x, 1)).fold((0, 0), (lambda x, y: (x[0] + y[0], x[1] + y[1])))
+>>> print sumCount[0] / float(sumCount[1])
+5.5
+
+##############################################################
+# reduce를 이용한 평균구하기
+##############################################################
+>>> rdd=sc.parallelize([1,2,3,4,5,6,7,8,9,10])
+>>> sumCount=rdd.map(lambda x: (x, 1)).reduce(lambda x, y: (x[0] + y[0], x[1] + y[1]))
+>>> print sumCount[0] / float(sumCount[1])
+5.5
+
+##############################################################
+# pair RDD 평균구하기
+##############################################################
+
+rdd=sc.parallelize([('panda', 0),('pink', 3),('pirate', 3),('panda', 1),('pink', 4)])
+>>> avg_rdd=rdd.mapValues(lambda x: (x, 1))
+>>> avg_rdd.take(10)
+[('panda', (0, 1)), ('pink', (3, 1)), ('pirate', (3, 1)), ('panda', (1, 1)), ('pink', (4, 1))]
+>>> reduce_rdd=avg_rdd.reduceByKey(lambda x, y: (x[0] + y[0], x[1] + y[1]))
+>>> reduce_rdd.take(10)
+[('pink', (7, 2)), ('panda', (1, 2)), ('pirate', (3, 1))]
+
+##############################################################
+# pair RDD 평균구하기 함수
+##############################################################
+import sys
+from pyspark import SparkContext
+
+def basicAvg(nums):
+    """Compute the avg"""
+    sumCount = nums.map(lambda x: (x, 1)).fold((0, 0), (lambda x, y: (x[0] + y[0], x[1] + y[1])))
+    return sumCount[0] / float(sumCount[1])
+
+if __name__ == "__main__":
+    master = "local"
+    if len(sys.argv) == 2:
+        master = sys.argv[1]
+    sc = SparkContext(master, "Sum")
+    nums = sc.parallelize([1, 2, 3, 4])
+    avg = basicAvg(nums)
+    print avg
+
+
+
+##############################################################
+# 집합함수 distinct union intersection subtract
+##############################################################
+distinct()         : 유일한 값만 추출한다.
+>>>rdd = sc.parallelize([1,2,3,4,4,1,2])
+>>> rdd.distinct().collect()
+[2, 4, 1, 3]  
+
+union              : 데이터셋을 합한다.
+>>> rdd = sc.parallelize([1,2,3,4,4,1,2])
+>>> rdd2 = sc.parallelize([8,9,0])
+>>> rdd.union(rdd2).collect()
+[1, 2, 3, 4, 4, 1, 2, 8, 9, 0] 
+
+intersection       : 데이터셋의 교집합을 구한다.
+>>> rdd = sc.parallelize([1,2,3,4,4,1,2])
+>>> rdd2 = sc.parallelize([8,9,0])
+>>> rdd2 = sc.parallelize([8,9,0,1,4])
+>>> rdd2.intersection(rdd).collect()
+[4, 1] 
+
+subtract()         : 한 rdd에서 다른 rdd가 포함하는 원소를 삭제한다.
+>>> rdd.subtract(rdd2).collect()
+[2, 2, 3] 
+
+##############################################################
+# pair RDD
+# CSV 파일에서 키값과 나머지 컬럼을 분리 하는 방법
+##############################################################			 
+user_data=user_lines.map(lambda x: (x.split("|")[0],x.split("|")))			 
+			 
+####################################################################################
+# RDD 함수의 종류
+####################################################################################
+collect()     : RDD를 적용시킨 리스트를 반환한다.
+ex)
+lines=sc.textFile("/tmp/nba.txt")
+lines.collect()
+
+count()       : RDD 요소의 갯수를 반환한다.
+ex)
+words_lists=lines.flatMap(lambda x: x.split(" "))
+words_lists.collect()
+
+filter()      : RDD에서 참인 경우만 요소를 통과시켜 새로운 RDD 반환한다.
+ex)
+lines = sc.textFile("/tmp/users.dat")
+csv_data=lines.map(lambda x: x.split("|"))  
+csv_data.count()
+male_list=csv_data.filter(lambda x: x[1]=="M")
+
+first()       : RDD에서 첫번째 리스트의 값을 반환한다.
+                리스트에 들어있는 요소에 따라 type이 다른다.
+ex)				
+lines = sc.textFile("/tmp/users.dat")
+lines.first()				
+
+take()        : RDD에서 입력 파라메터 크기 만큼 리스트를 반환한다.
+ex)				
+lines = sc.textFile("/tmp/users.dat")
+lines.take(10)	
+
+reduce()      : RDD에서 결과값을 하나로 합쳐주는 역할을 한다.
+ex)
+male_list=csv_data.filter(lambda x: x[1]=="M")
+male_list.count()
+male_age_list=male_list.map(lambda x: int(x[2]))
+male_total=male_age_list.reduce(lambda x,y: x + y)
+
+sortByKey()   : key:value 구조에서 키값 기준으로 데이터를 소트한다.
+                key:value 구조가 아니면 사용할 수 없다.
+
+top()         : 원하는 갯수만큼 sort한 결과 값을 져온다.
+                -가  오름차순이다.
+ex)
+male_age_min =male_age_list.top(10,lambda s: +s)
+
+takeOrdered() : 원하는 갯수만큼 sort한 결과 값을 져온다.
+			    +가  오름차순이다.
+ex)
+male_age_min =male_age_list.takeOrdered(1,lambda s: +s)		
+#multifield orderby
+movie_count.takeOrdered(10, key=lambda x: (-1 * x[0],x[1]))		
+				
+takeSample()  :  random한 요소를 반환한다.
+ex)
+male_age_sample =male_age_list.takeSample(withReplacement=True, num=6, seed=1000)
+male_age_sample =male_age_list.takeSample(True, 6, 1000)
+
+countByValue():  값별로 갯수를 반환한다.
+flatMap()     : map 함수가 수행될때 때때로 list나 튜플 형태로 반환될 때가 있다.
+                list안의 값을 모두 나열하여 새로운 RDD를 구성하기를 원할때 사용한다.
+reduceByKey() : pair RDD를 이루고 있는 경우 적용이 가능하다
+                key값을 기준으로 셔플이 하고 이를 합산을 해준다.
+groupByKey()      :  pair RDD를 이루고 있는 경우 적용이 가능하다
+                     key, value값을 기준으로 셔플이 하고 합산을 해준다.
+				     key가 같은데 value가 다르면 불필요한 셔플이 일어나
+				     네트웍, 메모리에 부하를 준다.
+				     같은 키값이 많은 경우 oom이 발생할 수 있다.
+cache() 함수      : RDD를 메모리에 상주시키는 역할을 한다.
+
+persist()         : RDD를 메모리에 상주시키는 역할을 한다.
+
+unpersist()       : 메모리에서 해당 데이터를 제거
+
+toDebugString()   : 현재 생성된 RDD의 정보를 보여준다.
+                  (2) male_age_listRDD PythonRDD[12] at RDD at PythonRDD.scala:43 [Memory Serialized 1x Replicated]
+                  |  /tmp/users.dat MapPartitionsRDD[8] at textFile at NativeMethodAccessorImpl.java:-2 [Memory Serialized 1x Replicated]
+                  |  /tmp/users.dat HadoopRDD[7] at textFile at NativeMethodAccessorImpl.java:-2 [Memory Serialized 1x Replicated]
+getStorageLevel() : RDD가 현재 어느위치에 저장되어 있는지(메모리 or 디스크)를 보여준다.
+                    Memory Serialized 1x Replicated 
+					
+union()           : 두개의 RDD를 합할대 사용한다.
+
+getNumPartitions(): RDD의 현재 파티션의 수를 알아볼때 사용
+
+repartition()     : 대형 파티션에서 데이터 필터링 후 불필요한 셔플을 방지하기 위해
+                    파티션의 수를 줄이는데 사용합니다.
+					
+coalesce()        : 대형 파티션에서 데이터 필터링 후 불필요한 셔플을 방지하기 위해
+                    파티션의 수를 줄이는데 사용합니다.
+					repartition의 최적화된 버전입니다.
+
+					
+
+
+
+
+####################################################################################
+# pyspark 특정 컬럼의 합계 count min max
+####################################################################################
+lines = sc.textFile("/tmp/users.dat")
+csv_data=lines.map(lambda x: x.split("|"))  
+csv_data.count()
+#성별 남자의 나이의 합계
+male_list=csv_data.filter(lambda x: x[1]=="M")
+male_list.count()
+male_age_list=male_list.map(lambda x: int(x[2]))
+male_total=male_age_list.reduce(lambda x,y: x + y)
+
+#성별 여자의 나이의 합계
+female_list=csv_data.filter(lambda x: x[1]=="F")
+female_list.count()
+female_age_list=female_list.map(lambda x: int(x[2]))
+# 아래와 같이 reduce 또는 fold를 사용할 수 있다.
+female_total=female_age_list.reduce(lambda x,y: x + y)
+female_fold_total = female_age_list.fold(0, (lambda x, y: x + y))
+
+female_fold_total = female_age_list.fold(0,add)
+
+>>> rdd=sc.parallelize([("a",1),("b",2),("a",2)])
+>>> from operator import add
+>>> sorted(rdd.foldByKey(0,add).collect())
+[('a', 3), ('b', 2)]
+
+#성별 남자의 나이의 평균
+#합산한 후 모수를 나눠주기위해 갯수도 같이 구한다.
+male_age_sum = male_age_list.map(lambda x: (x, 1))
+male_age_sum_cnt=male_age_sum.fold((0, 0), (lambda x, y: (x[0] + y[0], x[1] + y[1])))
+male_age_sum_cnt[0] / float(male_age_sum_cnt[1])
+
+#first와 take
+#first와 take는 RDD가 얼마나 파티션닝되었냐에 따라 결과 값이 달라진다.
+male_age_list
+
+
+#sort : takeOrdered, top ,sortByKey
+#sortByKey()는 key:value 구조가 아니면 사용할 수 없다.
+#top은 -가 오름차순이다.
+#takeOrdered +가 오름차순이다.
+# 아래는 male_age_list에서 1000개를 추출하여 내림차순으로 정렬한다.
+male_age_order =male_age_list.takeOrdered(1000,lambda s: -s)
+
+#MAX
+# 아래는 male_age_list에서 내림차순으로 정렬하므로 첫번째를 가져오면 max가 된다.
+male_age_max =male_age_list.takeOrdered(1,lambda s: -s)
+
+#MIN
+# 아래는 male_age_list에서 오름차순으로 정렬하므로 첫번째를 가져오면 min 된다.
+male_age_min =male_age_list.takeOrdered(1,lambda s: +s)
+
+#TOP N
+# 아래는 male_age_list에서 내림으로 정렬하므로 위서 부터 10개를 구하면 TOP 10이된다.
+male_age_min =male_age_list.takeOrdered(10,lambda s: -s)
+
+#takeSample
+male_age_sample =male_age_list.takeSample(withReplacement=True, num=6, seed=1000)
+
+#cache()
+male_age_list.setName("male_age_listRDD")
+male_age_list.cache()
+print male_age_list.is_cached
+
+#toDebugString() 
+print male_age_list.toDebugString()
+
+#getStorageLevel() 
+print male_age_list.getStorageLevel()
+4|Citi Revolving Cards|||072456447|0029064440500|4743604020611698|0029064440500|0|090828|2016-04-01|6000|6000|KRW||KOR|Korea, Republic of||N||N||2016040109082847436040206116980000000742950|鍮檣곕㏏?痢腎ㅺ뎄紳ㅻ|竊竊踰吏||||||100180||00074295|A|2016040109082847436040206116980000000742950||||||072456447||||||||||||||APR|2016-04-30|HCAS|||
+####################################################################################
+# pyspark SQLContext 사용하여 분석하기
+####################################################################################
+
+from pyspark.sql import SQLContext
+from pyspark.sql import Row
+from time import time 
+sqlContext = SQLContext(sc)
+
+lines= sc.textFile("/tmp/users.dat")
+
+lines= sc.textFile("/tmp/AMLCARDS_HCAS_AUTHORIZATION_20160430_20170427.DAT")
+lines= sc.textFile("file:///tmp/ttt.txt")
+lines= sc.textFile("file:///tmp/ggg.txt")
+csv_data = lines.map(lambda l: l.split("|"))
+csv_data = lines.map(lambda l: l.split(","))
+row_data = csv_data.map(lambda p: Row(id=int(p[0]),     
+                                      gender=p[1],    
+									  age=int(p[2]),    
+									  zipcode=p[3]    
+									  )
+						)
+row_data = csv_data.map(lambda p: Row(test=p[1]))	
+auth_df=sqlContext.createDataFrame(row_data)				
+user_df=sqlContext.createDataFrame(row_data)
+
+#DF에 직접 SQL 날리기와 수행시간 계산
+start=time()
+user_df.select("id","gender").groupby("gender").count().show()
+elapsed= time()-start
+print "Query performed in %s seconds " % round(elapsed,3)
+
+#groupby 절에 나오는 컬럼은 select 절에 있어야 함.
+#user_df.select("age","gender").groupby("gender","age").count().show()
+user_df
+
+#아래처럼 테이블로 등록해서 사용할 수 도 있다.
+user_df.registerTempTable("users")
+auth_df.registerTempTable("auth")
+
+#SQL의 수행결과는 RDD이다.
+male_list=sqlContext.sql("""
+select * from users where gender="M"
+""")
+
+user_list=sqlContext.sql("""
+select * from users
+""")
+
+auth_list.show()
+
+user_list.show()
+
+
+male_list.show()
+
+#데이터 프레임의 구조를 볼 수 있다.
+user_df.printSchema()
+
+####################################################################################
+# pyspark
+# spark sql join
+####################################################################################
+from pyspark import SparkContext, SparkConf, HiveContext
+
+if __name__ == "__main__":
+
+  # create Spark context with Spark configuration
+  conf = (SparkConf().setMaster("local").setAppName("My app").set("spark.executor.memory", "1g"))
+  sc = SparkContext(conf = conf)
+  sqlContext = HiveContext(sc)
+  df_07 = sqlContext.sql("SELECT * from sample_07")
+  df_07.filter(df_07.salary > 150000).show()
+  df_08 = sqlContext.sql("SELECT * from sample_08")
+  tbls = sqlContext.sql("show tables")
+  tbls.show()
+  df_09 = df_07.join(df_08, df_07.code == df_08.code).select(df_07.code,df_07.description)
+  df_09.show()
+  df_09.write.saveAsTable("sample_09")
+  tbls = sqlContext.sql("show tables")
+  tbls.show()
+  
+####################################################################################
+# outliers 설정
+# www.dezyre.com 보고 정리 할것
+####################################################################################
