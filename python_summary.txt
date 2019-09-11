@@ -1,0 +1,1547 @@
+############################################################
+# ipython
+#######################################################print(1+1)
+#####
+1. 함수나 변수 이름뒤에 물음표를 치면 정보를 제공해 준다.
+2. 현재 정의되어 있는 변수를 보고싶으면 %who를 입력하면 모든변수를 보여준다.
+3. 정의된 변수를 제거하고 싶을때 del <변수명>
+4. 현재 메모리에 올라온 모든 변수를 제거하려면 %reset
+5. 실행코드의 실행 시간알아보기
+   %time sum(range(1.100))
+In [5]: %time sum(range(2**16))
+Wall time: 997 µs
+Out[5]: 2147450880
+
+############################################################
+# ipython 노트북
+############################################################
+1. 실행
+cd c:\anaconda3\Scripts
+>jupyter notebook
+
+
+############################################################money=True
+
+if money: 
+    print("택시타고가라")
+else:
+    print("걸어가라")
+#파이썬의 사칙연산
+############################################################
+- 더하기 
+ 1+1
+- 빼기
+ 2-1
+- 곱하기
+ 3 * 3
+- 나누기
+ 9/3  # 3.0으로 표현된다.
+ 9//3 # 3으로 표현된다.
+- 거듭제곱
+ 2 ** 4 # 2의 4제곱이다.
+ 
+############################################################
+#문자열의 조작
+# replace, find, lstrip, rstrip, strip,len(문자열)
+# split, count, count, upper, lower
+############################################################
+- 문자열 만드는 방법
+  1. 문자열 안에 쌍따온표를 쓰고 싶을땐 ""를 사용
+	 name='kangjh"s house' 
+     name='kangjh\"s house'
+  2. 문자열 안에 홑따온표를 쓰고 싶을땐 ""를 사용
+     name="kangjh's house" 
+     name='kangjh\'s house'
+	 
+  3. 여러줄이 문자열을 선언 하는 방법 """ 또는 '''를 사용한다.
+   multiline='''
+   life is to short
+   you need python
+   '''
+   >>> print(multiline)
+   life is to short
+   you need python
+   
+- 문자와 숫자의 결합 
+   >>> a=[1,2,3]
+   >>> str(a[2]) +'hi'
+   '3hi'
+   
+- 문자열의 결합
+   var1='kang'
+   var2='junghwa'
+   var1+var2 # kangjunghwa
+ 
+- 문자열 곱하기
+   var='test'
+   int_var=10
+   var * int_var # test를 10번 출력한다.
+   int_var * var # test를 10번 출력한다.
+
+- 문자열 길이 구하기
+   >>> a = "Life is too short, You need Python"
+   >>> len(a)
+   17
+
+- 문자열 인덱싱(0부터 시작된다.)
+   >>> a = "Life is too short, You need Python"
+   >>> a[3]
+   'e'
+
+- 뒤에서 부터 2번째 문자 추출
+   >>> a = "Life is too short, You need Python"
+   >>> a[-2]
+   'o'
+   >>> a[-5]
+   'y'
+
+- 문자열 슬라이싱 : 앞에서 부터 4개의 문자 추출
+   >>> a = "Life is too short, You need Python"
+   >>> a[:4]
+   'Life'
+-  from to를 지정하여 추출
+   >>> a[0:4]
+   'Life'
+   >>> a[5:7]
+   'is'
+
+- from만 지정하여 끝까지
+   >>> a[19:]
+   'You need Python'
+
+- to만 지정하여 처음부터 to 까지
+   >>> a[17:]
+   ', You need Python'
+
+- from to 없이 처음부터 끝까지
+   >>> a[:]
+   'Life is too short, You need Python'
+
+- 특정문자의 위치 찾기
+- index와 find의 차이는 index는 찾는 문자가 없을시에 오류가 발생한다.
+   >>> jumin = "881212-1234567"
+   >>> jumin[0:jumin.find('-')]
+   '881212'
+   >>> jumin[0:jumin.index('-')]
+   >>> jumin[jumin.find('-')+1:]
+   '1234567'
+- 문자열 사이에 특정 문자 삽입하기
+   >>> ",".join('abcd')
+   'a,b,c,d'
+- 리스트의 각요소 사이에 문자열을 삽입하여 문자열로 변환하기
+   >>> insert_value=['1','kang','male']
+   >>> ",".join(insert_value)
+   '1,kang,male'
+
+- 좌우 공백지우기, 양쪽 공백지우기
+  var1='   life is short    '
+  >>> var1.lstrip()
+  'life is short    '
+  >>> var1.rstrip()
+  '   life is short'
+  >>> var1.strip()
+  'life is short'
+
+- 문자열 치환하기 
+   >>> a = "Life is too short"
+   >>> a.replace('Life','Your leg')
+   'Your leg is too short'
+
+- 문자열을 공백 기준으로 나누기
+   >>> a = "Life is too short"
+   >>> a.split()
+   ['Life', 'is', 'too', 'short']
+   
+- 문자열을 구분자 기준으로 나누기
+   >>> a = "abc:def:hij"
+   >>> a.split(':')
+   ['abc', 'def', 'hij']
+
+- 문자열을 포멧팅 - 숫자
+   >>> "I eat %d apples" %3
+   'I eat 3 apples'
+- 문자열을 포멧팅 - 문자
+   >>> "I eat %s apples" %'five'
+   'I eat five apples''
+  
+- 문자열을 포멧팅 - 2개이상의 값 넣기
+   >>> "I eat %s apples so I sick for %d days" %('ten',2 )
+   'I eat ten apples so I sick for 2 days'
+
+- 문자열을 포멧팅 - 2개이상의 값 넣기 format 이용
+   >>> "I eat {0} apples so I sick for {1} days".format('ten',2 )
+   'I eat ten apples so I sick for 2 days
+   
+- 문자열을 포멧팅 - 소숫점
+   >>> "PI is %f" %3.14
+   'PI is 3.140000'
+
+- 문자열을 포멧팅 - 소숫점 format이용
+   >>> "PI is {0}".format(3.14)
+   'PI is 3.14'
+   
+- 문자열을 포멧팅 - 문자열에 %를 쓰고자 할때
+   >>> "HDD Disk %f%% used" %95.5
+   'HDD Disk 95.500000% used'
+   
+- 문자열을 포멧팅 - 문자열에 %를 쓰고자 할때 format 이용
+   >>> "HDD Disk {0}% used".format(95.5)
+   'HDD Disk 95.5% used'
+   >>> "HDD Disk {0}% used so HDD Disk left {1}%".format(95.5,4.5)
+   'HDD Disk 95.5% used so HDD Disk left 4.5%'
+- 문자열을 포멧팅 -  format을 사용하여 소숫점 제한하기
+- 소숫점이 1자리인 경우 0.1f, 소숫점이 2자리인 경우 0.2f
+   >>> y = 3.42134234
+   >>> "{0:0.4f}".format(y)
+   'deciaml number is 3.4213'
+   
+- 포함하는 문자의 갯수
+  var1 ='wonderful world'
+  var1.count('n')
+
+- 대문자로 변환
+  var1.upper()
+
+- 소문자로 변환
+  var1.lower()
+  
+- 변수를 총 10자리로 지정하고 모자르면 왼쪽에 공백으로 채우기
+  - 화살표가 가르킨 쪽으로 포멧안의 문자가 간다.
+  >>> "{0:<10}".format("hi")
+  'hi        '
+
+- 변수를 총 10자리로 지정하고 모자르면 오른쪽에 공백으로 채우기
+   >>> "{0:>10}".format("hi")
+   '        hi'
+- 변수를 총 10자리로 지정하고 모자르면 양쪽 공백으로 채우기
+   >>> "{0:^10}".format("hi")
+   '    hi    '
+
+- 변수를 총 5자리로 지정하고 모자르면 선행 0으로 체우기
+    int1=1
+    int2=11
+    int3=111
+
+    "{0:>05}".format(int1)
+    "{0:>05}".format(int2)
+    "{0:>05}".format(int3)
+
+
+############################################################
+#리스트 변수
+#형이 다른 요소를 가질 수 있다.
+# append, remove, insert, join, sort, reverse, len(리스트)
+# pop, set(리스트) 
+############################################################
+- 리스트 변수 선언
+  agroup=['kim','lee','kang']
+- 요소 추가
+  agroup.append('jung')
+
+- 요소 제거
+  agroup.remove('jung')
+
+- 특정위치에 요소 삽입 - 첫번째 위치에 삽입
+  agroup.insert(1,'hyun')
+
+- 리스트의 요소에 특정 문자를 삽입하여 문자열 만들기
+   >>> b=['Life', 'is', 'too', 'short']
+   >>> " ".join(b)
+   'Life is too short'  
+  
+- 요소 정렬
+   >>> agroup.sort()
+   >>> agroup
+   ['kang', 'kim', 'lee']
+
+- 요소 뒤집기
+  >>> agroup=['kim','lee','kang']
+  >>> agroup.reverse()
+  >>> agroup
+  ['kang', 'lee', 'kim']
+  
+- 해당인덱스의 요소 가져오기
+  agroup[0]
+- 리스트 합치기
+   >>> a = [1, 2, 3]
+   >>> b = [4, 5, 6]
+   >>> a + b
+   [1, 2, 3, 4, 5, 6]
+- 리스트 반복하기
+   >>> a = [1, 2, 3]
+   >>> a * 3
+   [1, 2, 3, 1, 2, 3, 1, 2, 3]
+- 리스트 길이 구하기
+   >>> a = [1, 2, 3]
+   >>> len(a)
+
+- 지정한 리스트 요소 갯수 구하기
+   >>> agroup.count('kim')
+   1
+
+- 리스트 요소 끄집어내기(pop)
+  마지막 요소를 돌려주고 그 요소는 삭제된다.
+   >>> a=[1,2,3,4,0]
+   >>> a.pop()
+   0
+   >>> a
+   [1, 2, 3, 4]
+- 리스트에서 중복 제거하기   
+   >>> a = [1, 1, 1, 2, 2, 3, 3, 3, 4, 4, 5]
+   >>> b=set(a)
+   >>> b
+   {1, 2, 3, 4, 5}
+
+############################################################
+#사전 변수(키:밸류 형식)
+#형이 다른 요소를 가질 수 있다.
+get, pop keys, values,
+############################################################
+- 사전형 변수의 선언
+activity={'mon':'축구','tues':'농구','sun':'야구'}
+- 키로 밸류 가져오기
+ activity['sun'] 
+- 키로 밸류 가져오기 pop 사용
+ activity.pop('sun')
+ 
+- 해당변수의 모든 키 가져오기
+ activity.keys()
+- 해당변수의 모든 밸류 가져오기
+for item in sports:
+    print(item)
+    print(sports.get(item))
+    
+ activity.value()
+- 아래처럼 키와 밸류가 서로 형이 다를 수 있다. 
+ activity={'mon':'축구','tues':'농구','sun':'야구','fri':4567,123:'avc'}
+
+- 사전형 for 루프 돌리기
+- item 은 키값을 가져오고
+- activity[item] 밸류를 가져온다.
+for item in activity:
+    print(item)
+    print(activity[item])
+ 
+############################################################
+#집합형 변수
+#집합형은 중복을 허용하지 않는다. 
+#순서가 없다.(인덱스를 이용해서 값을 가져올 수 없다.)
+#사전형과 같이 중괄호를 사용한다.
+#비어있는 자료형의 경우 set 함수를 이용하여 선언할 수도 있다.
+############################################################
+- 집합형의 선언
+  setVar={'apple','banana'}
+- set 함수를 이용하여 리스트를 집합형으로 선언
+  fruit=['apple','banana','tomato','tomato']
+  setVar1=set(fruit)
+  결과 : {'apple', 'tomato', 'banana'}
+- set 함수를 이용 각 문자열 요소로 하는 집합변수 선언
+  setVar2=set('Hello')
+  결과 :{'o', 'l', 'e', 'H'}
+- 집합 연산 하기  
+  s1 = set([1, 2, 3, 4, 5, 6])
+  s2 = set([4, 5, 6, 7, 8, 9])
+  집합형의 교집합 구하기(intersaction)
+  s1 & s2
+  집합형의 차집합 구하기(difference)
+  s1 - s2
+  집합형의 합집합 구하기(union)
+  s1 | s2  
+- 집합 변수에 하나의 요소 추가
+  s1.add(0)
+- 집합 변수에 여러개의 요소 한번에 추가
+  s1.update(['a','b','c'])
+  결과 : {1, 2, 3, 4, 5, 6, 'c', 'a', 'b'}
+- 집합 변수에서 특정값 제거하기
+  s1.remove('a')
+  s1.remove('b')
+  s1.remove('c')
+  결과 : {1, 2, 3, 4, 5, 6}
+  
+############################################################
+#튜플 변수
+#튜플과 리스트의 유일한 차이는 튜플은 추가 변경할 수 없다.
+#튜플형은 사전형의 키가 될수 있지만 리스트는 될수 없다.
+############################################################
+   >>> product={}
+   >>> apple_key1=('apple','10kg')
+   >>> apple_key2=('apple','20kg')
+   >>> product[apple_key1] = '5000won'
+   >>> product[apple_key2]='10000won'
+   >>> product
+   {('apple', '10kg'): '5000won', ('apple', '20kg'): '10000won'}
+ 
+- 튜플은 아래처럼 괄호를 생략할 수 있다. 
+   >>> c= 'python', 'life'
+   >>> c
+   ('python', 'life')
+
+- 튜플 인덱싱
+   >>> c= 'python', 'life'
+   >> c[0]
+   'python'
+
+- 튜플 더하기
+   >>> t1 = (1, 2, 'a', 'b')
+   >>> t2 = (3, 4)
+   >>> t1 + t2
+   (1, 2, 'a', 'b', 3, 4)
+
+- 튜플 길이 구하기
+   >>> t1 = (1, 2, 'a', 'b')
+   >>> len(t1)
+   4
+
+- 요소가 하나인 튜플 선언하기
+   >>> t1 = (1,)
+   >>> len(t1)
+   1
+   
+############################################################
+#bool 자료형
+# 문자열의 경우 zero length가 아닌 경우 true다.
+# 복합자료형의 경우 요소가 있으면 true이다.
+# 숫자 자료형의 경우 0이 아니면 true이다.
+############################################################
+str='python'
+bool(str)
+결과 : true
+
+bool(9999)
+결과 : false
+
+- 문자열 테스트 결과 : 참
+if "python":
+    print("참")
+else:
+    print("거짓")
+
+- 리스트 테스트 결과 : 참
+listA=[1,2,3]
+if listA:
+     print("참")
+else:
+    print("거짓")
+############################################################
+#비교 연산자
+############################################################
+15 < 10  # false 를 리턴한다.
+10 != 10 # false 를 리턴한다.
+10 == 10 # 비교연산자는 변수대입 때 사용하는 = 와 구별하여 ==를 사용한다.
+
+############################################################
+#변수의 선언
+#변수에 다른 변수를 대입하면 주소만 복사하게 된다.
+############################################################
+a=[1,2,3]
+b=a
+
+- 테스트 프로그램1 
+  결과 : 같습니다.
+if id(b) == id(a):
+    print("같습니다.")
+else:
+    print("다릅니다.")
+
+- is를 사용한 테스트 프로그램1 
+  is는 객체가 동일한지를 판별하기 때문에 id 함수 안에 넣고 실행하면
+  다른 결과를 리턴합니다.  
+  결과 : 같습니다.
+if b is a:
+    print("같습니다.")
+else:
+    print("다릅니다.")
+	
+- 변수 a의 요소를 변경했을때 b의 변화
+>>> a[0]=9
+>>> a
+[9, 2, 3]
+>>> b
+[9, 2, 3]
+
+- 주소를 복사하지 않고 요소를 복사한는 방법 [:] 사용
+>>> c=b[:]
+>>> b[1]=8
+>>> b
+[9, 8, 3]
+>>> c
+[9, 2, 3]
+
+- 주소를 복사하지 않고 요소를 복사한는 방법2 copy 사용
+- [:]과는 다르게 c를 변경해도 d는 변경안된다.
+>>> c=[1,2,3]
+>>> from copy import copya
+>>> d=copy(c)
+>>> c[0]=999
+>>> c
+[999, 2, 3]
+>>> d
+[1, 2, 3]
+
+############################################################
+#변수의 선언하는 다양한 방식
+############################################################
+- 아래는 a에 python이 b에 life가 할당된다.
+a, b = ('python', 'life')
+a, b = 'python', 'life'
+
+- 같은 값을 동시에 할당하기
+>>> c=d='python'
+>>> c
+'python'
+>>> d
+'python'
+
+if (13 % 2) == 0:
+    print("짝수")
+else:
+    print("홀수")
+	
+	
+jumin='81120-1068234'
+print(jumin(0:6))
+
+
+############################################################
+# if 문 사용하기
+############################################################
+- 기본적인 if 문 사용하기
+  money=True # True 첫글자 대문자로
+  if money:
+      print('택시타고가라')
+  else:
+      print('걸어가라')
+
+- 기본적인 if 문으로 숫자 비교하기
+  money=1000
+  if money>5000:
+      print('택시타고 가라')
+  else:
+      print('버스타고 가라')
+	
+- if문에서 or 조건 사용하기
+  money=1000
+  card=True
+  if money > 5000 or card:
+      print('택시타고 가라')
+  else:
+      print('걸어가라')
+	
+- list에 원하는 항목이 있는지 검사
+  pocket = ['paper', 'cellphone', 'money']
+  if 'money' in pocket:
+      print('택시타고 가라')
+  else:
+      print('걸어가라')
+
+- if문에서 elif 사용하기
+  pocket = ['paper', 'cellphone', 'card']
+  if 'money' in pocket:
+      print('택시타고 가라')
+  elif 'cellphone' in pocket:
+      print('폰이 있으니 택시타고 가라')
+  else:
+      print('걸어가라')
+str_a="Life is too short you need python"
+
+if "too" in str_a:
+    print("str_a include too")
+else:
+    print("str_a not include too")
+
+a = "Life is too short, you need python"
+if 'Life' in a:
+    print('a include "Life" word')
+############################################################
+# while 문 사용하기
+############################################################
+- while문 사용하기
+  hit=0
+  while hit < 10:
+      hit=hit+1
+      print('나무를 %d 찍었습니다.' % hit)
+      if hit == 10:
+          print('나무가 넘어갑니다.')
+		  
+- 사용자가 입력한 조건이 exit 번호일때 까지 loop 돌리기
+  prompt="""
+  1 : add
+  2 : dell
+  3 : list
+  4 : quit
+  
+  Enter number: 
+  """
+  number=0
+  while number != 4:
+      print(prompt)
+      number=int(input())
+
+- while 문 무한 loop 빠져나가기
+  money = 5000
+  coffee_cnt=100
+  
+  while money > 0:
+      coffee_cnt=coffee_cnt-1;
+      if coffee_cnt > 0:
+          print('커피를 제공합니다.')
+      else:
+          print('커피가 다 팔렸습니다.')
+          break
+- while 문 continue를 이용하여 처음으로 돌아가기
+  cnt=0
+  while cnt < 100:
+      cnt=cnt+1
+      if cnt % 2 == 0:
+          continue
+      else:
+          print(cnt)
+		  
+############################################################
+# for 문 사용하기
+############################################################
+- list 내용 출력하기
+numbers=['one','two','three','four']
+for num in numbers:
+    print(num)
+
+- list 안에 tuple 내용 출력하기
+  numbers=[(1,2),(3,4),(5,6)]
+  for (first, second) in numbers:
+      print(first + second)
+
+- list 안에 내용 조건에 따라 출력하기
+  marks = [90, 25, 67, 45, 80]
+  number=0
+  for score in marks:
+      number=number+1
+      if score >= 60:
+          print('%d 번 학생 통과 하였습니다.' % number) 
+      else:
+          print('%d 번 학생 불합격 하였습니다.' % number)
+		  
+- list 안의 내용 중 일부만 출력하기(pass, continue를 사용할 수 있다.)
+  marks = [90, 25, 67, 45, 80]
+  number=0
+  for score in marks:
+      number=number+1
+      if score >= 60:
+          pass #continue도 동일
+      else:
+          print('%d 번 학생 불합격 하였습니다.' % number)
+
+- for 문에서 range 함수 사용하기
+  - range 함수는 to는 포함하지 않는다.
+  for i in range(0,10):
+      print(i)
+
+- for문과 range 합수를 사용한 구구단 프로그램
+  for dan in range(2,10):
+      for i in range(1,10):
+          print('%d * %d = %d' %(dan, i, dan*i ))
+  	  
+- 리스트 내부에서 for문의 사용
+  evennum=[ num * 2 for num in range(1,11)]
+  multipleof3 =[ num * 2 for num in range(1,11) if num % 3 ==0 ]
+  
+- 리스트를 활용한 구구단
+  result=[dan * i for dan in range(2,10)
+                for i in range(1,10)]
+				a = "Life is too short, you need python"
+
+- 문자 변수의 길이 만큼 for loop 돌리기
+a = "Life is too short, you need python"
+for a1 in a:
+    print(a1)
+	
+############################################################
+# 함수 사용하기
+############################################################
+# 출력을 하는 함수
+def add(a, b):
+    print(a+b)
+
+#값을 리턴하는 함수
+def add(a, b):
+    return a+b
+	
+#매개변수가 없는 함수
+def say():
+    return 'Hi'
+
+#입력값이 몇개가 될지 모를때
+def add_many(*args):
+    result=0
+    for num in args:
+        result = result + num
+    return result # for문에 영향을 받지 않는 문장이므로 indent를 하지 않는다.
+	
+############################################################
+# 함수 호출하기
+############################################################
+def add(a, b):
+    return a+b
+
+# 위치기반으로 인자 전달
+add(3,5) 
+
+# 명시적으로 변수에 값 할당 명시적으로 할당시에는 순서가 바껴도 상관 없다.add(b=3,a=5)
+add(a=3,b=5) 
+
+############################################################
+# 키워드 파라메터 사용하기
+############################################################
+def print_kwargs(**kwargs):
+    print(kwargs)
+
+>>> print_kwargs(param=123)
+{'param': 123}
+>>> print_kwargs(name='kangjh',param=123)
+{'name': 'kangjh', 'param': 123}
+
+#kwargs는 사전형으로 전달되기 때문에 keys() values() 함수를 사용할 수 있다.
+def print_kwargs_keys(**kwargs):
+    print(kwargs.keys())
+
+>>> print_kwargs_keys(name='kangjh',param=123)
+dict_keys(['name', 'param'])
+
+############################################################
+# 함수의 결과값은 하나이다.
+############################################################
+  def add_and_mul(a,b):
+      return a+b, a*b
+  	
+  add_and_mul(2,3)
+  
+  # 함수의 리턴값은 하나이기 때문에 위의 함수를 호출하면 tuple 형으로 (5,6)이 리턴된다.
+  # 만약에 리턴값을 2개의 변수에 나눠 저쟝을 하려면 아래처럼 호출해야 한다.
+  >>> result1, result2=add_and_mul(2,3)
+  >>> result1
+  5
+  >>> result2
+  6
+
+############################################################
+# 함수의 매개변수 초기값설정
+# 매개변수를 초기값 설정을 하면 매개변수가 넘어오지 않은경우 초기값을 사용하고
+# 매개변수가 넘어오면 넘어온 값을 사용한다.
+# 초기값 설정은 위치 기반으로 동작하므로 초기설정한 값이 중간에 있는 경우는
+# 호출시 생략이 불가능하다.
+############################################################
+def say_myself(name, old, man=True): 
+    print("나의 이름은 %s 입니다." % name) 
+    print("나이는 %d살입니다." % old) 
+    if man: 
+        print("남자입니다.")
+    else: 
+        print("여자입니다.")
+		
+############################################################
+# 종료의 의미로 return을 사용하기
+# 아래의 경우에 특정 파라메터값이 넘어오는 경우 
+# 매개변수 없는 return을 통해 함수를 종료한다.
+# print문은 매개변수에 영향을 받는 문장이 아니기 때문에 indent를 하지
+# 않았다.
+############################################################
+def say_nick(nick): 
+    if nick == "바보": 
+        return 
+    print("나의 별명은 %s 입니다." % nick)
+	
+############################################################
+# 함수 안에서 사용한 변수의 범위는 함수안에서만 유효하다.
+############################################################
+# 아래의 경우 a라는 변수가 함수 안에서만 사용되기 때문에 print(a)를 하게되면
+# 에러가 발생한다. 아래 함수 문제점은 return을 통해 값을 전달하면 된다.
+# 함수 안에서 사용한 변수의 범위는 함수안에서만 유효하다.
+def vartest(a):
+    a = a + 1
+
+vartest(3)
+print(a)
+
+############################################################
+# print 사용법
+############################################################
+#print는 변수를 출력하거나 문자열을 출력할 때 사용한다.
+# 문자열을 연결하기 위해서는 따온표로 된 문자열을 연속해서 사용하거나 +기호를 사용한다.
+print("life is too short", "you need python")
+print("life is too short " "you need python")
+print("life is too short "+"you need python")
+
+#한줄에 출력을 하기 위해서는 end를 사용해 끝 문자를 지정해야 한다.
+for i in range(0,11):
+    print(i,end=' ')
+	
+for i in range(0,11):
+    print(i,end=', ')
+
+############################################################
+# 파일 읽고 쓰기
+############################################################
+#파일 생성하기
+#두번째 파라메터가 r 읽기모드 a 추가모드 w 쓰기모드
+#아래 코드를 write.py로 저장해 보자
+f = open("C:\\\\app\\new.txt", "w")
+for i in range(10):
+    data='%d 번째 줄입니다.\n' % i
+    f.write(data)
+f.close()
+
+#파일 읽어들이기
+#아래의 경우 loop를 이용하지 않아 첫줄만 출력된다.
+f = open("C:\\\\app\\new.txt", "r")
+line =f.readline()
+print(line)
+f.close()
+
+#loop를 이용하여 읽어 들이기
+f = open("C:\\\\app\\new.txt", "r")
+while True:
+    line=f.readline()
+    if not line: break
+    print(line)
+f.close()
+
+#readlines 함수 사용하기
+#readlines 함수는 파일에서 읽어 들인 라인을 list로 돌려준다.
+f=open('c:\\\\app\\new.txt','r')
+lines=f.readlines()
+for line in lines:
+    print(line)
+f.close()
+
+#read 함수 사용하기
+#read 함수는 파일의 내용 전체를 문자열로 돌려준다.
+
+f=open('c:\\\\app\\new.txt','r')
+contents=f.read()
+print(contents)
+
+#파일에 내용 추가하기
+f=open('c:\\\\app\\new.txt','a')
+for i in range(10,20):
+    data='%d 번째 줄입니다.\n' %i
+    f.write(data)
+f.close()
+
+#with문과 함께 파일 다루기
+#with문을 사용하면 파일 close를 자동으로 해준다.
+with open('c:\\\\app\\new1.txt','w') as f:
+    f.write("life is too short")
+
+############################################################
+# 사용자의 입력 출력하기
+############################################################
+
+import sys
+args=sys.argv[1:]
+for i in args:
+    print(i,end=" ")
+
+
+############################################################
+# 클래스 사용하기
+############################################################
+#클래스에서 모든 메소드를 정의할때 self 파라메터를 정의해야 한다.
+class FourCal:
+    def setdata(self,first,second):
+        self.first = first
+        self.second=second
+    def add(self):
+        return self.first + self.second
+    def sub(self):
+        return self.first - self.second
+    def mul(self):
+        return self.first * self.second
+    def div(self):
+        return self.first / self.second
+
+#호출하는 방법은 아래와 같이 인스턴스를 생성하고
+#인스턴스를 통해 메소드를 호출한다.
+a=FourCal()
+a.setdata(4,2)
+
+# 아래와 같은 방법으로도 호출이 가능하다.
+a = FourCal()
+FourCal.setdata(a, 4, 2)
+
+# 생성자 메소드
+FourCal 수행시 setdata를 호출하지 않고 add 메소드를 호출하면
+에러가 발생한다. 이유는 setdata를 호출해야만 first와 second가 생성되기
+때문이다.
+
+이렇게 초깃값을 설정할 필요가 일을때는 setdata 메소드를 이용하기 보다는
+__init___ 생성자 메소드를 사용하는것이 안전한 방법이다. 아래와 같이
+생성자 메소드가 있을때는 인스턴스 생성시 초깃값을 지정해 줘야 한다.
+
+
+def __init__(self, first, second):
+	self.first = first
+	self.second = second
+
+아래와 같이 초기값을 지정하여 생성하고 값을 변경할 필요가 있을때는 setdata를 통해
+값을 변경한다.
+a=FourCal(3,4)
+
+
+############################################################
+# 클래스 상속 사용하기
+############################################################
+# 거듭제곱을 기능을 이용하기 위해 FourCal을 상속해보자
+# 상속을 사용할때는 클래스 정의시 상속하고자 하는 클래스를 괄호안에 기입한다.
+# 상속을 하면 부모클래스의 모든 기능을 이용할 수 있게 된다.
+
+class MoreFourCal(FourCal):
+    def pow(self):
+        return self.first ** self.second
+
+# 상속한 클래스의 인스턴스 생성시 부모클래스의 생성자를 호출하여 초깃값을 설정해야한다.
+a=MoreFourCal(2,3)
+
+# 부모 클래스의 메소드를 정의하면 overriding이되어 재정의 할 수 있다.
+  자식 클래스의 인스턴스를 생성하여 overriding된 메소드를 호출하면
+  자식 클래스의 메소드가 호출된다.
+  
+############################################################
+# 모듈 사용하기
+############################################################  
+#모듈은 이미 만들어 놓은 파이썬 코드를 사용할 수 있도록 해준다.
+#import 기능을 이용하여 사용할 수 있다.
+#import <python 파일명>
+#아래와 같이 임포트한 모듈이름을 이용하여 메소드를 호출할 수 있다.
+#mod1.add
+>>> import mod1
+>>> print(mod1.add(3, 4))
+
+#아래와 같이 임포트한 모듈이름을 사용하지 않으려면 아래와 같이 from문을
+#이용할 수 있다.
+>>> from mod1 import add
+>>> add(3, 4)
+# 아래와 같이 사용할 수도 있다.
+from mod1 import *
+
+############################################################
+# main 함수 사용하기
+############################################################  
+# mod1.py 
+def add(a, b): 
+    return a+b
+
+def sub(a, b): 
+    return a-b
+
+print(add(1, 4))
+print(sub(4, 2))
+
+# 위의 mod1.py를 import 하면 함수만 사용을 하려고 해도
+# print문이 실행된다.
+# 아래와 같이 if __name__ == "__main__": 구문을 추가하면
+#만약 C:\doit>python mod1.py처럼 직접 mod1.py 파일을 실행할 경우 
+#mod1.py의 __name__ 변수에는 __main__ 값이 저장된다.
+# python 명령어를 통해 실행되었을 경우만 print 문이 실행된다.
+# mod1.py 
+def add(a, b): 
+    return a+b
+
+def sub(a, b): 
+    return a-b
+
+if __name__ == "__main__":
+    print(add(1, 4))
+    print(sub(4, 2))
+	
+############################################################
+# 모듈 프로그램에서는 클래스와 변수 함수를 모두 포함 할 수 있다.
+############################################################  
+# mod2.py 
+PI = 3.141592
+/*클래스 내부에서 함수를 정의할때는 들여쓰기를 해야 한다.*/
+class Math: 
+    def solv(self, r): 
+        return PI * (r ** 2) 
+
+def add(a, b): 
+    return a+b 
+
+-모듈 변수 사용방법
+import mod2
+print(mod2.PI)
+
+-모듈 함수 사용방법
+import mod2
+print(mod2.add(2,3))
+
+-모듈 클래스 사용방법
+-생성자 처럼 Math() 생성후 사용
+import mod2
+a=mod2.Math()
+print(a.solv(2))
+
+############################################################
+# 파이썬 모듈을 바로 불러올수 있도록 디렉토리 추가하기
+# sys.path 명령어를 파이썬 라이브러리가 설치되어 있는 디렉토리를 볼수 있다.
+# append 명령을 통해 파이썬이 바로 사용자가 정의한 
+# 모듈 디렉토리를 추가 할 수 있다.
+############################################################  
+>>> sys.path
+['', 'C:\\Users\\kang\\AppData\\Local\\Programs\\Python\\Python37\\python37.zip', 
+     'C:\\Users\\kang\\AppData\\Local\\Programs\\Python\\Python37\\DLLs', 
+	 'C:\\Users\\kang\\AppData\\Local\\Programs\\Python\\Python37\\lib', 
+	 'C:\\Users\\kang\\AppData\\Local\\Programs\\Python\\Python37', 
+	 'C:\\Users\\kang\\AppData\\Local\\Programs\\Python\\Python37\\lib\\site-packages']
+>>> sys.path.append('c:\\app')
+## 아래 명령어를 통해 'c:\\\\app' 추가된 것을 확인 할 수 있다.
+>>> sys.path
+
+############################################################
+# 파이썬 모듈 디렉토리를 사용할 수 있도록 아래와 같이
+# PYTHONPATH 명령어를 사용할 수 있다.
+############################################################
+C:\doit>set PYTHONPATH=C:\doit\mymod
+C:\doit>python
+>>> import mod2
+>>> print(mod2.add(3,4))
+7
+
+############################################################
+# 파이썬에서 numpy 생성과 크기확인 타입확인
+############################################################
+import numpy as np
+#numpy  array 생성
+a=np.array([0,1,2,3,4])
+b=np.arange(10)
+
+#numpy  array 크기확인
+a.shape
+
+#numpy  2차원 array 크기확인
+data=np.array([[1,2,3,4],[5,6,7,8]])
+data.shape
+(2, 4)
+
+#numpy  0으로 구성된 2*4 array생성
+np.zeros(2,4)
+
+#numpy  0으로 구성된 3*4 array생성
+np.zeros((5,), dtype=int)
+array([0, 0, 0, 0, 0])
+
+# 1부터 14 까지의 요소를 가지는 array 생성
+np.arange(15)
+
+# array 데이터 형 확인
+data.dtype
+dtype('int32')
+
+# array 데이터 형을 지정하여  array 선언
+arr1=np.array([[1,2,3,4],[5,6,7,8]], dtype=np.int32)
+arr2=np.array([[9,10,11,12],[13,14,15,16]], dtype=np.int32)
+
+############################################################
+# 파이썬에서 numpy array 값변경 인덱싱
+############################################################
+
+# 값의 변형
+a=np.arange(10)
+array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+a[0]=100
+a[6:8]=99
+array([ 0,  1,  2,  3,  4,  5, 99, 99,  8,  9])
+
+# 인덱스번째의 값 가지오기
+a=np.arange(10)
+array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+a[5]
+5
+
+# array 의 모든값 가져오기
+a[:]
+
+#인덱스 1부터 4전까지 가져온다 4는 포함않음
+a[1:4]
+array([1, 2, 3])
+
+# 여러개의 인덱스값 변경 3번째는 999 4번째는 777
+a[3:5]=999,777
+
+############################################################
+# 파이썬에서 numpy array 연산
+############################################################
+
+# numpy의 값 연산
+# 아래의 연산 결과는 같은 index의 값끼리 합쳐서
+# z=x+y의 결과는 z= [3,7] 값을 갖는다.
+# 만약 서로 리스트의 갯수가 다르다면 같은 인덱스의
+# 값까지만 연산을 한다.
+x=np.array([1,4])
+y=np.array([2,3])
+# numpy 더하기 연산
+x+y
+array([3, 7])
+# numpy 빼기 연산
+x-y
+array([-1,  1])
+# numpy 곱하기 연산
+x*y
+array([ 2, 12])
+
+# numpy 나누기 연산
+x/y
+array([0.5       , 1.33333333])
+
+# numpy array 각 요소값에 특정 값을 더한 결과 반환 하기
+# 결과값은 [11,21,31,-9] 이다.
+u=np.array([10,20,30,-10])
+v=u+1
+
+############################################################
+# 파이썬에서 numpy 2차원 array
+############################################################
+
+# 이차원 array 사용하기(Array 안에 Array)
+arr2d=np.array([[1,2,3,4],
+               [5,6,7,8],
+               [9,10,11,12],
+               [13,14,15,16]])
+
+# 이차원 array 값 추출하기
+# 첫번째는 행이고 두번째는 열이다.
+# 2행의 모든열 이라는 뜻이다.
+arr2d[2,:]
+array([ 9, 10, 11, 12])
+# 1~3행의 모든 열이라는 뜻이다.
+arr2d[1:3,:]
+array([[ 5,  6,  7,  8],
+       [ 9, 10, 11, 12]])
+# 아래는 모든 행에대해서 3번째 열만 가져오라는 뜻이다.
+arr2d[:,3]
+array([[ 5,  6,  7,  8],
+       [ 9, 10, 11, 12]])
+# 모든행에 대해서 0,1열을 가져오라는 뜻이다.
+arr2d[:,:2]
+array([[ 1,  2],
+       [ 5,  6],
+       [ 9, 10],
+       [13, 14]])
+# 3행의 2열을 가져와라
+arr2d[3,2]
+15
+
+# 2차원 array의 값변경 하기
+# 아래는 3행의 1부터 4열 값이 모두 10으로 변경된다.
+arr2d[3,1:5]=10
+
+############################################################
+# 파이썬에서 numpy array boolean index 사용
+############################################################
+
+# boolean index 사용하기 위한 data set
+names=np.array(['kang','jung','hwa','kang','jung','hwa','jiho'])
+
+#rand는 실수를 추출하고 randn은 정수까지 확장해서 추출한다.
+data=np.random.rand(7,4)
+data=np.random.randn(7,4)
+
+# 마스크 추출하기
+# 아래의 결과는 kang이 있는 인덱스는 True를 없는 인덱스는 False를 리턴한다.
+names=='kang'
+array([ True, False, False,  True, False, False, False])
+
+# 마스크를 이용해서 다른 array에서 추출하기
+# names=='kang' 는 첫번째 4번째가 True 이기 때문에 data에서
+# 1,4 행만 추출된다.
+data[names=='kang',:] 
+# 아래와 같이 or 조건을 사용할 수 있다.
+data[names=='kang' | names=='jung',:] 
+
+# data 에서 값추출하기
+data[:,3] # 모든 행에서 3번째 열추출
+array([ 0.98400423,  0.85736507,  0.17116871,  0.5805286 ,  0.67526828,
+        0.03508198, -1.20829909])
+data[:,3] < 0 # 0보다 작은 값만추출
+array([False, False, False, False, False, False,  True])
+
+#아래의 경우 data[:,3] < 0 조건이 7번째 행만 true기 때문에
+#7번째 행에 두첫째 열만 가져오게 된다.
+data[data[:,3] < 0 ,1 ]
+array([0.04653525])
+
+############################################################
+# numpy array 함수 사용하기
+############################################################
+arr=np.arange(1,10)
+array([1, 2, 3, 4, 5, 6, 7, 8, 9])
+#제곱근을 구하는 함수
+np.sqrt(arr)
+
+#log10을 구하는 함수
+np.log10(arr)
+
+#두개의 array 값을 비교해서 maximum값을 반환하는 함수
+x=np.random.randn(8)
+array([ 0.82960727, -1.24233413,  0.7744974 , -0.6090242 , -1.97509933,
+        1.37757474, -0.26345863, -0.09493707])
+y=np.random.randn(8)
+array([ 2.32112224,  1.2469701 ,  0.68516014,  0.97630116,  0.37250122,
+       -0.13855832, -0.58358569,  1.29642825])
+np.maximum(x,y)
+array([ 2.32112224,  1.2469701 ,  0.7744974 ,  0.97630116,  0.37250122,
+        1.37757474, -0.26345863,  1.29642825])
+		
+# dot 함수는 x*y 연산을 한후 두수를 더한값을 리턴한다.
+# 결과값은 14이다.
+d=np.dot(x,y)
+
+# linspace
+#주어진 숫자의 범위값을 주어진 갯수로 균등 분한한 리턴값을 반환한다.
+#시작값과 끝값은 포함된다.[5,10,15]
+
+ls=np.linspace(5,15,num=3)
+
+############################################################
+# numpy array 통계 연산
+############################################################
+
+# numpy array sum
+nu=np.array([1,2,3,4,5,6,7,8,9,10])
+sum_nu=nu.sum()
+
+# numpy array 평균 구하기
+nu=np.array([1,2,3,4,5,6,7,8,9,10])
+mean_nu=nu.mean()
+
+# numpy array 최대값 구하기
+max_nu=nu.max()
+
+# numpy array 최소값 구하기
+min_nu=nu.min()
+
+# 변수를 연산하여 numpy array 생성하기
+#아래결과는 [0, pi/2, 3.14]
+np.pi
+x=np.array([0,np.pi/2,np.pi])
+   
+# 아래는 행이 5이고 열이 4인 array생성
+arr=np.random.randn(5,4)
+
+# 아래는 각 열에 대한 평균을 구하는 방법
+arr.mean(axis=0)
+array([ 0.54010006,  0.16250374, -0.25522382, -0.1790958 ])
+
+# 아래는 각 행에 대한 평균을 구하는 방법
+arr.mean(axis=1)
+array([-0.24114578,  0.46883419,  0.27340787, -0.13556479, -0.03017625])
+
+# array에서 조건을 만족하는 갯수 구하기
+arr > 0 #true/false 마스크를 생성한다.
+# true는 1을 반환하고 false는 0을 반환 하기때문에 결국 조건을 만족하는 갯수가 구해진다.
+(arr > 0).sum()  
+
+# array에서 정렬하기 top 30개 등을 구할때 사용
+arr=np.random.randn(8)
+array([ 2.24046035,  0.7478736 ,  0.00735393, -1.20857835,  0.74389781,
+        0.28879604,  0.66500713,  0.31937783])
+np.sort(arr) #오름차순
+array([-1.20857835,  0.00735393,  0.28879604,  0.31937783,  0.66500713,
+        0.74389781,  0.7478736 ,  2.24046035])
+np.sort(arr)[::-1] #내림차순
+array([ 2.24046035,  0.7478736 ,  0.74389781,  0.66500713,  0.31937783,
+        0.28879604,  0.00735393, -1.20857835])
+
+# 이차원 array에 대한 정렬하기
+arr=np.random.randn(5,3)
+array([[-1.3731504 , -0.01793516, -0.26472453],
+       [ 0.90747789,  1.37603218,  0.77179043],
+       [-1.01610724,  0.271581  , -0.01928502],
+       [-0.4882787 ,  0.43559554,  0.89233398],
+       [-0.10451554,  0.0297741 , -0.30461398]])
+
+np.sort(arr, axis=0) #열 방향에 대한 정렬하기
+array([[-1.3731504 , -0.01793516, -0.30461398],
+       [-1.01610724,  0.0297741 , -0.26472453],
+       [-0.4882787 ,  0.271581  , -0.01928502],
+       [-0.10451554,  0.43559554,  0.77179043],
+       [ 0.90747789,  1.37603218,  0.89233398]])
+	   
+np.sort(arr, axis=1) #행 방향에 대한 정렬하기
+array([[-1.3731504 , -0.26472453, -0.01793516],
+       [ 0.77179043,  0.90747789,  1.37603218],
+       [-1.01610724, -0.01928502,  0.271581  ],
+       [-0.4882787 ,  0.43559554,  0.89233398],
+       [-0.30461398, -0.10451554,  0.0297741 ]])
+
+# array에서 상위 10%에 해당하는 값만 추출
+arr=np.random.randn(100)
+np.sort(arr)[::-1] # 내림차순으로 소트
+np.sort(arr)[::-1][int(0.1 * len(arr))] # 상위 10%해당하는 값만추출
+arr > np.sort(arr)[::-1][int(0.1 * len(arr))] # 상위 10% 보다 큰 값추출
+np.sort(arr[arr > np.sort(arr)[::-1][int(0.1 * len(arr))]]) # 10%보다 큰값을 소트
+
+# array에서 중복된 값을 제거하고 추출
+names=np.array(['kang','jung','hwa','kang','jung','hwa','jiho'])
+np.unique(name)
+ints=np.array([1,2,4,3,4,5,2,1])
+np.unique(ints)
+
+############################################################
+# numpy를 이용한 데이터 분석
+############################################################
+#np로 txt파일 읽기
+import numpy as np
+data= np.loadtxt("c:\\\\app\\ml-1m\\ratings.dat",delimiter='::',dtype=np.int64)
+#처음 5행 읽기
+data[:5, :]
+#전체데이터의 모양확인 row가 1000209 행이 4
+data.shape
+(1000209, 4)
+# 전체 평균 평점 구하기
+mean_rating_total=data[:, 2].mean()
+3.581564453029317
+# 사용자별 평점 계산하기
+user_ids=np.unique(data[:,0])
+user_ids.shape
+#사용자별 평균 평점을 담을 리스트를 선언한다.
+mean_rating_by_user_list=[]
+for user_id in user_ids:
+    #아래의 실행결과는 특정 id에 대한 데이터셋이 각각 생성된다.
+    data_for_user=data[data[:,0] == user_id, :]
+    mean_rating_for_user=data_for_user[:,2].mean()
+    mean_rating_by_user_list.append([user_id,mean_rating_for_user])
+	
+mean_rating_by_user_list
+[[1, 4.188679245283019],
+ [2, 3.7131782945736433],
+ [3, 3.9019607843137254],
+ [4, 4.190476190476191],
+ [5, 3.1464646464646466]]
+ 
+mean_rating_by_user_array=np.array(mean_rating_by_user_list,dtype=np.float32)
+mean_rating_by_user_array.shape
+
+############################################################
+# 파이썬에서 pandas 사용하기
+############################################################
+import numpy as np
+import pandas as pd
+#Series는 index와 value를 가지는 자료구조 이다.
+obj = pd.Series([4,7,-1,0])
+0    4
+1    7
+2   -1
+3    0
+dtype: int64
+#values를 통해 Series value만 가져올수 있다.
+obj.values
+rray([ 4,  7, -1,  0], dtype=int64)
+
+#index를 통해 Series index의 형태를 확인 할 수 있다.
+obj.index
+RangeIndex(start=0, stop=4, step=1)
+
+#dtype를 통해 index의 타입형태를 확인 할 수 있다.
+obj.dtype
+dtype('int64')
+
+#Series는 사용자가 인덱스를 지정할 수 있다..
+obj2 = pd.Series([4,7,-1,0],index=['one','two','three','four'])
+one      4
+two      7
+three   -1
+four     0
+dtype: int64
+
+#Series는 dictionary 형을 변환해서 만들수 있다.
+dic_fruits={"banana":500,"apple":1000,"melon":3000}
+obj3=pd.Series(dic_fruits)
+obj3
+banana     500
+apple     1000
+melon     3000
+dtype: int64
+
+#Series는 이름을 지정할 수 있다.
+obj3.name="Fruits"
+obj3.index.name="Fruits_Name"
+Fruits_Name
+banana     500
+apple     1000
+melon     3000
+Name: Fruits, dtype: int64
+
+#Series는 기존 생성된 index를 변형할 수 있다.
+#index를 변형할때는 list 또는 numpy array를 사용할 수 있다.
+obj3.index=['a','b','c']
+a    500
+b    1000
+c    3000
+Name: Fruits, dtype: int64
+
+
+
+#DataFrame 사용하기
+#dictionary 형을 통한 DataFrame 생성
+data={'name':['kang','jung','hwa','jung','hwa','jiho'],
+      'year':[1977,1988,1944,2010,2008,1987],
+      'point':[2.5,1.7,3.6,5.5,7.7,3.4]}
+df=pd.DataFrame(data)
+    name	year	point
+0	kang	1977	2.5
+1	jung	1988	1.7
+2	hwa	    1944	3.6
+3	jung	2010	5.5
+4	hwa	    2008	7.7
+5	jiho	1987	3.4
+
+# index 형태가져오기
+df.index
+RangeIndex(start=0, stop=6, step=1)
+
+# 컬럼명 가져오기
+df.columns
+Index(['name', 'year', 'point'], dtype='object')
+
+# value만 가져오기
+array([['kang', 1977, 2.5],
+       ['jung', 1988, 1.7],
+       ['hwa', 1944, 3.6],
+       ['jung', 2010, 5.5],
+       ['hwa', 2008, 7.7],
+       ['jiho', 1987, 3.4]], dtype=object)
+
+#데이터프레임의 index의 이름 지정하기
+df.index.name='num'
+df.column.name='col_name'
+df
+
+col_name	name	year	point
+seq			
+0			kang	1977	2.5
+1			jung	1988	1.7
+2			hwa		1944	3.6
+3			jung	2010	5.5
+4			hwa		2008	7.7
+5			jiho	1987	3.4
+
+#데이터프레임의 index의 이름 사용자가 지정하기
+#columns 파라메터를 통해 컬럼순서를 바꿀 수 있다.
+#hometown data dictionary에 없는 컬럼이어서 NaN으로 표기되었다.
+#NaN는 데이터 베이스의 null과 같이 어떤값도 표시할 수 었을때 데이터프레임에서
+#표기되는 방식이다.
+
+df2=pd.DataFrame(data,clomns=['year','name','point','hometown'],
+                 index=['one','two','three','four','five','six'])
+
+	  year	name	point	hometown
+one	  1977	kang	2.5		NaN
+two	  1988	jung	1.7		NaN
+three 1944	hwa		3.6		NaN
+four  2010	jung	5.5		NaN
+five  2008	hwa		7.7		NaN
+six	  1987	jiho	3.4		NaN
+
+#DataFrame에서 숫자컬럼에 대해서 기초통계량 보기
+df2.describe()
+	    year	point
+count	6.000000	6.000000
+mean	1985.666667	4.066667
+std	    24.121913	2.189673
+min	    1944.000000	1.700000
+25%	    1979.500000	2.725000
+50%	    1987.500000	3.500000
+75%	    2003.000000	5.025000
+max	    2010.000000	7.700000
+
+
+# CSV 파일 읽어 들이기
+csv_path='c:\\\\app\\c.csv'
+df=pd.read_csv(csv_path)
+df
+   Flight      Date Dest  FirstClass  Economy
+0     439  12/11/00  LAX        20.0      137
+1     921  12/11/00  DFW        20.0      131
+2     114  12/12/00  LAX        15.0      170
+3     982  12/12/00  dfw         5.0       85
+4     439  12/13/00  LAX        14.0      196
+5     982  12/13/00  DFW        15.0      116
+6     431  12/14/00  LaX        17.0      166
+7     982  12/14/00  DFW         7.0       88
+8     114  12/15/00  LAX         NaN      187
+9     982  12/15/00  DFW        14.0       31
+
+# 데이터 프레임에서 원하는 값만 읽어들이기
+fl=df[['Flight']]
+fl
+   Flight
+0     439
+1     921
+2     114
+3     982
+4     439
+5     982
+6     431
+7     982
+8     114
+9     982
+
+- 딕셔너리 읽어들이기
+>>> foods={"name":["짜장","떡뽑기","쫄면"],
+        "price":[3000,5000,4000],
+        "EA":[10,20,30]}
+>>> food_df=pd.DataFrame(foods)
+>>> food_df
+  name  price  EA
+0   짜장   3000  10
+1  떡뽑기   5000  20
+2   쫄면   4000  30
+
+- 원하는 컬럼만 추출
+>>> x=food_df[['price','name']]
+>>> x
+   price
+0   3000
+1   5000
+2   4000
+
+- 원하는 셀의 내용을 index를 이용하여 가져오기
+>>> f11=df.loc[0:2, '']
+>>> f11
+439
+
+- 원하는 셀의 내용을 index를 이용하여 가져오기
+>>> f11=df.iloc[0,0]
+>>> f11
+439
+
+- 원하는 셀의 내용을 인덱스로 제한하여 이용하여 가져오기
+- 아래 내용은 row를 0부터 2개 컬럼도 0부터 2개 가져온다.
+>>> f11=df.iloc[0:2, 0:2]
+>>> f11
+   Flight      Date
+0     439  12/11/00
+1     921  12/11/00
+
+- 중복값이 있는지 체크하기
+- true false 형태의 series로 반환한다.
+f.duplicated(['key1'])
+df.duplicated(['key1', 'key2'])
+
+0    False
+1    False
+2     True
+3    False
+4     True
+
+- 중복값제거
+- 두번째 파라메터  keep = 'first'이면 처음 중복값을 남기고
+- keep = 'last'이면 마지막 중복 값을 남긴다.
+- keep = False 이면 중복되면 모두 제거한다.
+df_dest=df.drop_duplicates(subset=['Dest'])
+
+- 범위 필터링하기
+df2=df[df['Date']>'12/12/00']
+
+- csv로 저장하기
+df2.to_csv('c:\\\\app\\d.csv')
+df_dest
