@@ -1,3 +1,25 @@
+1.spark 다운로드
+  https://www.apache.org/dyn/closer.lua/spark/spark-2.4.4/spark-2.4.4-bin-hadoop2.7.tgz
+2. eclipse 
+   help 메뉴에 install new software 를 선택하고  add 버튼을 클릭한다.
+   Name 에  scala-ide 로케이션에서  http://download.scala-ide.org/sdk/lithium/e44/scala211/stable/site 를 입력한다.
+3. scala ide for eclipse를 모두 선택한다.
+
+4. 스칼라 메이븐 플러그인 설치
+   name에 m2eclipse-scala 를 입력한다
+   로케이션에는 http://alchim31.free.fr/m2e-scala/update-site 를 입력한다.
+   
+5. file > new > project > maven > maven project를 선택하고
+   첫화면 에서는 아무 변경없이 다음을 클릭한다
+   다음 화면에서 catalog에서 configure 버튼을 클릭하고 add remote catalog를 선택한다.
+   catalog file에 아래의 url을 입력하고
+   description에는 spark in action 이라고 입력한다.
+   http://github.com/spark-in-action/scala-archetype-sparkinaction/raw/master/archetype-catalog.xml
+   
+6. 추가된 archetype을 선택하고 다음을 클릭한다.
+   GroupId에는 com.hynix를 입력하고 artifact id에는 sparkhbase라고 입력한다.
+
+
 1. SPARK란?
 Apache Spark는 인메모리 처리 기능을 갖춘 오픈소스 분산 컴퓨팅 프레임워크 입니다. Apache Spark는 최첨단 DAG 스케줄러, 쿼리 최적화 프로그램 및 실제 실행 엔진을 사용하여 배치 및 스트리밍 데이터 모두에 대해 높은 성능을 제공합니다.
 
