@@ -1,5 +1,5 @@
 https://stackoverflow.com/questions/39255973/split-1-column-into-3-columns-in-spark-scala
-
+https://stackoverflow.com/questions/51994069/how-to-write-out-an-array-to-file-in-spark
 
 https://intellipaat.com/community/14798/spark-2-0-x-dump-a-csv-file-from-a-dataframe-containing-one-array-of-type-string
 먼저 catcalinfo를 읽어서 array 컬럼이 있는지 조사한다.
