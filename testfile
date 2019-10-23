@@ -1,1 +1,19 @@
 https://stackoverflow.com/questions/39255973/split-1-column-into-3-columns-in-spark-scala
+
+
+https://intellipaat.com/community/14798/spark-2-0-x-dump-a-csv-file-from-a-dataframe-containing-one-array-of-type-string
+먼저 catcalinfo를 읽어서 array 컬럼이 있는지 조사한다.
+array컬럼을 list에 담아서 아래 함수를 적용해서 csv 파일을 만든다.
+
+
+import org.apache.spark.sql.functions._
+
+val stringify = udf ((vs : Seq [String]) => vs 일치 {
+
+  case null => null
+
+  case _ => s "" "[$ {vs.mkString (", ")}]" ""
+
+})
+
+df.withColumn ( "ArrayOfString", stringify ($ "ArrayOfString")). write.csv (...)
