@@ -1,0 +1,42 @@
+1. 파라메터를 절달 받을 쉘스크립트를 만든다. 파라메터는 위치 파라메터로 만든다.
+/ usr / bin / curl -i“$ 1 ″ -o $ 2
+/ usr / bin / hdfs dfs -copyFromLocal $ 2 $ 2
+
+2. hue애서 워크플로를 만들때 argument를 이용하여 전달 받을 파라메터를 받습니다.
+<argument>${url}</argument>
+<argument>${output}</argument>
+
+3. 2번과정을 통해 만들어진 workflow.xml 파일은 아래와 같습니다.
+<workflow-app name=”GetCSVData” xmlns=”uri:oozie:workflow:0.4″>
+<start to=”GetCSVData”/>
+<action name=”GetCSVData”>
+<shell xmlns=”uri:oozie:shell-action:0.1″>
+<job-tracker>${jobTracker}</job-tracker>
+<name-node>${nameNode}</name-node>
+<exec>GetCSVData.sh</exec>
+<argument>${url}</argument>
+<argument>${output}</argument>
+<file>/user/root/oozie-scripts/OozieTest/GetCSVData.sh#GetCSVData.sh</file>
+</shell>
+<ok to=”end”/>
+<error to=”kill”/>
+</action>
+<kill name=”kill”>
+<message>Action failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>
+</kill>
+<end name=”end”/>
+</workflow-app>
+
+4. job.properties 파일을 만듭니다.
+   기본적으로 workflow.xml의 내용을 모두 기술합니다.
+
+oozie.wf.application.path=hdfs://localhost:8020/user/me/oozie-scripts/OozieTest
+jobTracker=localhost:8032
+nameNode=hdfs://localhost:8020
+url=http://www.google.com/finance/historical?q=NYSE%3ADATA&ei=TH0mVsrWBce7iwLE86_ABw&output=csv
+output=/tmp/DATA.csv
+
+5. 위지 웹ui의 config.xml을 ui 개발자에게 전달하여 curl로 호출하게 합니다.
+
+7. 아래와 같은 방법으로 oozie 명령어로도 전달할 수 있습니다.
+oozie job -oozie http://localhost:11000/oozie -config oozietest.properties -run
