@@ -1,0 +1,29 @@
+
+https://www.syncfusion.com/ebooks/hive-succinctly/external-tables-over-hbase
+
+1. 데이터 조인 hbase를 하이브 테이블로 만들기.
+   이미 존재하는 hbase 테이블을 hive 테이블에 생성할 때는 external 키워드를 사용한다.
+2. external 테이블 생성 시에 필터조건을 줄 수 없으므로 external 테이블 생성후 필터조건을 주고
+   select 하여 부분범위의 internal 테이블을 생성한다.( 
+    create table <internal table>  
+	    as select * from <external table>
+		      where 필터 조건
+		             
+   
+
+CREATE EXTERNAL TABLE hbase_table_2(key string, 
+                                    address_city string, 
+									address_country string, 
+									address_provice string, 
+									info_age string, 
+									info_birthday string, 
+									info_company string)   
+STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'   
+WITH SERDEPROPERTIES ("hbase.columns.mapping" = ":key,
+                                                 address:city, 
+                                                 address:country, 
+												 address:provice, 
+												 info:age, 
+												 info:birthday, 
+												 info:company")   
+TBLPROPERTIES("hbase.table.name" = "member_test"); 
