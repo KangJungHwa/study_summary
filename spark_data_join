@@ -1,0 +1,204 @@
+Joining RDDs from two different databases
+https://stackoverflow.com/questions/40054263/joining-rdds-from-two-different-databases
+
+Querying on multiple Hive stores using Apache Spark
+https://stackoverflow.com/questions/32714396/querying-on-multiple-hive-stores-using-apache-spark
+
+자바(Java) 숫자, 영문, 한글 여부를 체크하는 방법
+출처: https://needjarvis.tistory.com/227 [자비스가 필요해]
+
+MySQL의 데이터를 엘라스틱서치와 싱크(sync)해서 빠른 검색과 분석을 하는 방법 > #elasticsearch #logstash
+https://olpaemi.blog.me/221644176875
+
+[자기개발/엘라스틱서치(elasticsearch)-#10] Kibana-Visualize, Controls, Dash Board 에서 필터까지!
+https://blog.naver.com/xomyjoung/221662720883
+
+[HBase] Spark 와 연동해서 데이터 읽는 방법
+https://eyeballs.tistory.com/110
+
+[Spark] spark-hbase 모듈 테스트
+[출처] [Spark] spark-hbase 모듈 테스트|작성자 GamZehYaavor
+http://blog.naver.com/PostView.nhn?blogId=talag&logNo=220798797294&categoryNo=115&parentCategoryNo=0&viewDate=&currentPage=1&postListTopCurrentPage=&from=postList&userTopListOpen=true&userTopListCount=5&userTopListManageOpen=false&userTopListCurrentPage=1
+
+[HBase 이해]
+http://blog.naver.com/PostList.nhn?blogId=talag&from=postList&categoryNo=115
+
+
+
+
+
+spark 활용 다음 단계로 join 에 대해 설명하겠습니다
+우선 Join을 하려면 당연히 두개의 RDD를 만들어야 하며
+다음은 ORDER라는 주문테이블과 GOODS 라는 상품테이블 JOIN하는 예입니다.
+
+    val conf0 = new SparkConf()
+	  			 .setMaster("local")
+	  			 .setAppName("My App")
+	  			 .set("spark.executor.memory","1g")
+	  			 .setSparkHome("/home/cloudera/Downloads/spark-0.9.0-incubating")
+
+    val sc = new SparkContext(conf0)
+
+    val conf_order = HBaseConfiguration.create()
+
+    val conf_goods = HBaseConfiguration.create()
+
+    val TableName_Order = "ORDER"
+
+    val TableName_Goods = "GOODS"
+
+    conf_order.set(TableInputFormat.INPUT_TABLE, TableName_Order)
+
+    conf_goods.set(TableInputFormat.INPUT_TABLE,TableName_Goods)
+
+    val hBaseRDD_Order = sc.newAPIHadoopRDD(conf_order, classOf[TableInputFormat],
+
+      classOf[org.apache.hadoop.hbase.io.ImmutableBytesWritable],
+
+      classOf[org.apache.hadoop.hbase.client.Result])
+
+
+
+    val hBaseRDD_Goods = sc.newAPIHadoopRDD(conf_goods, classOf[TableInputFormat],
+
+      classOf[org.apache.hadoop.hbase.io.ImmutableBytesWritable],
+
+      classOf[org.apache.hadoop.hbase.client.Result])
+
+     
+
+    val t_Order = hBaseRDD_Order.map(tuple => tuple._2)
+
+    .map(result => ( new String(result.getValue("Attr".getBytes(), "GoodsNo".getBytes()) ).toInt) , new String(result.getValue("Attr".getBytes(), "OrderNo".getBytes())) )
+
+//이전편에 말한데로 Hbase 데이터를 읽어오게 되면 array[byte] 형태로 저장이 되어서 new String() 과 같은방식으로 String으로 변환
+
+//Join할 컬럼을 먼저해서 Tuple을 만듬
+
+    
+
+    val t_Goods = hBaseRDD_Goods.map(result => ( new String(result._1.get()), new String(result._2.getValue("Attr".getBytes(), "Color".getBytes()) )) )
+
+// GOODS테이블의 경우 GoodsNo가 Key 여서 result._1 로 받음
+
+
+
+    val f_Order = new PairRDDFunctions(t_Order) //PairRDD생성
+
+    val flow1 = f_Order .join(t_Goods) //join
+
+    
+
+   println(flow1.count) //건수를 확인
+
+import org.apache.spark._
+
+import org.apache.spark.rdd.NewHadoopRDD
+
+import org.apache.hadoop.hbase.{HBaseConfiguration, HTableDescriptor}
+
+import org.apache.hadoop.hbase.client.HBaseAdmin
+
+import org.apache.hadoop.hbase.mapreduce.TableInputFormat
+
+import org.apache.hadoop.hbase.client.Append
+
+import org.apache.hadoop.hbase.client.Append
+
+
+
+
+
+object hbase_test {
+
+  def main(args: Array[String]) {
+
+val conf0 = new SparkConf()
+
+	  			 .setMaster("local")
+
+	  			 .setAppName("My App")
+
+	  			 .set("spark.executor.memory","1g")
+
+	  			 .setSparkHome("/home/cloudera/Downloads/spark-0.9.0-incubating")
+
+
+
+val sc = new SparkContext(conf0)
+
+
+
+val conf = HBaseConfiguration.create() // Hbase연결
+
+
+
+val TableName = "GOODS" //테이블명
+
+conf.set(TableInputFormat.INPUT_TABLE, TableName)
+
+
+
+// Initialize hBase table if necessary
+
+val admin = new HBaseAdmin(conf)
+
+
+
+val hBaseRDD_Goods = sc.newAPIHadoopRDD(conf, classOf[TableInputFormat],
+
+      classOf[org.apache.hadoop.hbase.io.ImmutableBytesWritable],
+
+      classOf[org.apache.hadoop.hbase.client.Result])
+
+
+
+val tvalue = hBaseRDD_GOODS.first()
+
+val vvalue = tvalue._2.getValue("Attr".getBytes(), "GOODS_NAME".getBytes())
+
+/*
+
+tvalue는 tuple이며
+
+첫번째는 Key - Key값을 얻으려면 tvalue._1.get()
+
+두번째에는 값이 들어가 있음
+
+그래서 _2.getValue("ColumnFamily Name".getBytes(), "Column Name".getBytes() ) 하게되면 array[byte] 형태의 데이터를 받음
+
+*/
+
+
+
+hive는 SQL 문을 통해 HDFS에 저장된 데이터를 조회하거나 분석할 수 있도록 해주는 오픈소스이다.
+MapReduce 프로그래밍 없이 데이터를 분석할 수 있다는 장점 때문에 Hive를 매우 선호한다. HBase 테이블을 Hive(external) table로 생성하여 분석하는 경우도 많다.
+
+그러나 Hive query (HiveQL)를 통해 데이터를 조회하는 경우 query parser를 통해 MapReduce Job으로 변환되어 수행되기 때문에 속도를 보장할 순 없다. 물론 편하긴 하다. 
+만약 큰 데이터를 대상으로 범위를 지정하여 조회하거나, 아주 일부의 데이터만을 조회하는 경우 며칠 밤새 돌려도 결과가 안 나오기도 한다... (full table scan이 이루어지므로 비효율적이다.) 
+
+이런 경우 Apache Spark 과 HBase를 사용하면 효율적이다. 
+HBase는 HFile의 row key에 의해 정렬이 되어 저장되고, 각 region은 region server에 분산되어 저장되기 때문에 random access와 disk io가 상대적으로 적다. 
+Spark를 통해서 Hive external 테이블을 참조하는 경우 Spark SQL 보다 HBase Native API를 사용하면 HBase의 장점을 살려 속도 개선이 가능하다.
+
+아래의 scala 코드는 HBase Table을 로드하여 Spark Dataframe을 리턴하는 샘플 소스이다.
+
+def dftable(tbl: String, cf: String, cols: Array[String], fromto: (String, String) = ("", ""), colps: String = "") = {
+  @transient val conf = HBaseConfiguration.create()
+  conf.set(zkQuorumConf._1, zkQuorumConf._2)
+  val colsparam = if (colps.length > 0) colps else cols.map(n => s"${cf}:" + n).mkString(" ")
+  conf.set(TableInputFormat.INPUT_TABLE, tbl)
+  conf.set(TableInputFormat.SCAN_COLUMNS, colsparam)
+  val hbaseRDD = sc.newAPIHadoopRDD(conf,
+    classOf[TableInputFormat], classOf[ImmutableBytesWritable], classOf[Result])
+  if (fromto._1.length > 0) conf.set(TableInputFormat.SCAN_ROW_START, fromto._1)
+  if (fromto._2.length > 0) conf.set(TableInputFormat.SCAN_ROW_STOP, fromto._2)
+  val schema = StructType(cols.map(c => StructField(c, StringType, true)))
+  val rdd = hbaseRDD.mapPartitions(it =>
+    it.map(x => {
+      val r = x._2
+      org.apache.spark.sql.Row.fromSeq(cols.map(c => b2s1(r, cf, c)).toSeq)
+    }))
+  sqlContext.createDataFrame(rdd, schema)
+}
+[출처] Spark on HBase|작성자 chocolaterian
