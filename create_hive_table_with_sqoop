@@ -1,0 +1,13 @@
+
+ sqoop을 이용해서 rdbms의 테이블을 hive에 create하기
+sqoop import --connect jdbc:mysql://localhost:3306/sqoop 
+--username root 
+-P 
+--split-by id 
+--columns id,name 
+--target-dir /user/cloudera/ingest/raw/customers 
+--fields-terminated-by "," 
+--hive-import 
+--create-hive-table 
+--hive-table sqoop_workspace.customers
+--query 'SELECT * FROM customer WHERE $CONDITIONS'
