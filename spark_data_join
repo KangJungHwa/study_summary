@@ -1,3 +1,287 @@
+how to use Spark-Phoenix connection to run join queries on multiple tables?
+https://community.cloudera.com/t5/Support-Questions/How-to-use-Spark-Phoenix-connection-to-run-join-queries-on/td-p/194049
+
+https://greenplum-spark-connector.readthedocs.io/en/latest/Read-data-from-Greenplum-into-Spark.html
+
+https://github.com/kongyew/greenplum-spark-connector/blob/master/README_WRITE_JDBC.md
+
+
+그린플럼 데이터 spark로 select 하는 방법
+
+1. Pivotal Network 에서 greenplum-spark_2.11-xxjar를 다운로드하십시오 .
+
+val dataFrame = spark.read.format("io.pivotal.greenplum.spark.GreenplumRelationProvider")
+.option("dbtable", "basictable")
+.option("url", "jdbc:postgresql://gpdbsne/basic_db")
+.option("user", "gpadmin")
+.option("password", "pivotal")
+.option("driver", "org.postgresql.Driver")
+.option("partitionColumn", "id")
+.load()
+
+2.아래 명령어에 의해 필터링
+dataFrame.filter(dataFrame("id") > 40).show()
+
+Greenplum의 결과를 캐시하고 옵션을 사용하여 Spark 클러스터에서 메모리 내 처리 속도를 높이기 위해 임시 테이블을 작성합니다. 
+글로벌 임시보기 . 시스템 보존 데이터베이스 global_temp에 연결되어 있으므로 정규화 된 이름을 사용하여이를 참조해야합니다 
+(예 : SELECT * FROM global_temp.view1). 한편 Spark SQL의 임시 뷰는 세션 범위이며이를 생성하는 세션이 종료되면 사라집니다.
+scala>
+// Register the DataFrame as a global temporary view
+dataFrame.createGlobalTempView("tempdataFrame")
+// Global temporary view is tied to a system preserved database `global_temp`
+spark.sql("SELECT * FROM global_temp.tempdataFrame").show()
+
+
+import org.apache.spark.sql.functions.{col, lit}
+
+val allColumns: Seq[String] = ???
+
+val dataDF = spark.read.format("greenplum")
+  .option("url", conUrl)
+  .option("dbtable", "xx_lines")
+  .option("dbschema", "dbanscience")
+  .option("partitionColumn", "id")
+  .option("user", devUsrName)
+  .option("password", devPwd)
+  .load()
+  .where("year = 2017 and month=12")
+  .select(allColumns map col:_*)
+  .withColumn(flagCol, lit(0))
+  
+  
+
+오라클데이터를 select하는 방법  
+  
+you can try something like this which is DataFrame approach though I haven't tested the below.
+
+Database 1 :
+val employees = sqlContext.load("jdbc", 
+ Map("url" -> "jdbc:oracle:thin:hr/hr@//localhost:1521/database1", 
+"dbtable" -> "hr.employees"))
+employees.printschema
+Dabase 2 :
+val departments  = sqlContext.load("jdbc", 
+Map("url" -> "jdbc:oracle:thin:hr/hr@//localhost:1521/database2", 
+"dbtable" -> "hr.departments"))
+departments.printschema()
+Now join (broadcast is hint that its small data set and can perform broad cast hash join):
+val empDepartments = employees.join(broadcast(departments), 
+        employees("DEPARTMENT_ID")===
+        departments("DEPARTMENT_ID"), "inner")
+empDepartments.printSchema()
+
+empDepartments.explain(true)
+empDepartments.show()
+
+
+jdbc를 이용해서 hive 읽어 들이기
+
+I think this is possible by making use of Spark SQL capability of connecting and reading data from remote databases using JDBC.
+
+After an exhaustive R & D, I was successfully able to connect to two different hive environments 
+using JDBC and load the hive tables as DataFrames into Spark for further processing.
+
+Environment details
+
+hadoop-2.6.0
+
+apache-hive-2.0.0-bin
+
+spark-1.3.1-bin-hadoop2.6
+
+Code Sample HiveMultiEnvironment.scala
+
+    import org.apache.spark.SparkConf
+    import org.apache.spark.sql.SQLContext
+    import org.apache.spark.SparkContext
+    object HiveMultiEnvironment {
+      def main(args: Array[String]) {
+        var conf = new SparkConf().setAppName("JDBC").setMaster("local")
+        var sc = new SparkContext(conf)
+        var sqlContext = new SQLContext(sc)
+
+ // load hive table (or) sub-query from Environment 1
+
+        val jdbcDF1 = sqlContext.load("jdbc", Map(
+          "url" -> "jdbc:hive2://<host1>:10000/<db>",
+          "dbtable" -> "<db.tablename or subquery>",
+          "driver" -> "org.apache.hive.jdbc.HiveDriver",
+          "user" -> "<username>",
+          "password" -> "<password>"))
+        jdbcDF1.foreach { println }
+
+ // load hive table (or) sub-query from Environment 2
+
+        val jdbcDF2 = sqlContext.load("jdbc", Map(
+          "url" -> "jdbc:hive2://<host2>:10000/<db>",
+          "dbtable" -> "<db.tablename> or <subquery>",
+          "driver" -> "org.apache.hive.jdbc.HiveDriver",
+          "user" -> "<username>",
+          "password" -> "<password>"))
+        jdbcDF2.foreach { println }
+      }
+// todo: business logic
+    }
+Other parameters can also be set during load using SqlContext such as setting partitionColumn. Details found under 
+'JDBC To Other Databases' section in Spark reference doc: https://spark.apache.org/docs/1.3.0/sql-programming-guide.html
+
+Build path from Eclipse:
+
+enter image description here
+
+What I Haven't Tried
+
+Use of HiveContext for Environment 1 and SqlContext for environment 2
+
+Hope this will be useful.
+
+
+리비로 job 전달하기
+
+https://www.linkedin.com/pulse/submitting-spark-jobs-remote-cluster-via-livy-rest-api-ramasamy/
+
+
+Spark framework provides spark-submit command to submit Spark batch jobs and spark-shell for interactive jobs. Also provides org.apache.spark.launcher library package to submit the jobs but the library to be installed in the machine where job submission is called. Apache Livy Server is provides similar functionality via REST API call, so there is no third party dependency involved.
+
+Livy Server architecture:
+
+
+
+
+In this section we will look at examples with how to use Livy Spark Service to submit batch job, monitor the progress of the job.
+
+Perquisites:
+
+Apache Livy Server to be installed in Hadoop cluster master node. Apache Livy server can be downloaded from this link. I am using AWS EMR, enable the Livy service.
+If you are installing manually Livy Server, follow this link to configure the server.
+Start the Livy Server / service.
+Livy Server started the default port 8998 in EMR cluster. If server started successfully, the UI will be as follows
+
+
+Livy REST API to submit remote jobs to Hadoop cluster:
+
+Before submit a batch job, first build spark application and create the assembly jar. You must upload the application jar on the cluster storage (HDFS) of the hadoop cluster. The main difference between submitting job through spark-submit and REST API is that jar to be uploaded into the cluster.
+
+For example, the spark job submitted through spark-submit is
+
+spark-submit --class com.ravi.spark.analytics.SparkLivyTest --master yarn --deploy-mode client 
+   --conf spark.driver.memory=3G --name LivyREST --conf spark.executor.cores=3 parking/stream-analytics.jar group 15
+This job can be submitted through REST API from remote server. The spark job parameters is in JSON format. data is
+
+{
+  "name" : "LivyREST",
+  "className" :  "com.ravi.spark.analytics.SparkLivyTest",
+  "file"  : "/user/hadoop/parking/stream-analytics.jar",
+  "proxyUser" : "hadoop",
+  "driverMemory" : "3g",
+  "driverCores" : "3",
+  "args" : ["group", "3" ]
+}
+Submit the batch job with REST POST call to http://<livy-server>:8998/batches request
+
+curl -H "Content-Type: application/json" http://ec2-127-0-0-1.us-west-2.compute.amazonaws.com:8998/batches
+ -X POST --data '{
+  "name" : "LivyREST",
+  "className" :  "com.ravi.spark.analytics.SparkLivyTest",
+  "file"  : "/user/hadoop/parking/stream-analytics.jar",
+  "proxyUser" : "hadoop",
+  "driverMemory" : "3g",
+  "driverCores" : "3",
+  "args" : ["group", "3" ]
+}'
+The batch job response is as follows:
+
+{"id":21,"state":"starting","appId":null,"appInfo":{"driverLogUrl":null,"sparkUiUrl":null},"log":["stdout: ","\nstderr: ","\nYARN Diagnostics: "]}
+The various status of batch response state are as follows:
+
+not_started
+starting
+busy
+idle
+shutting_down
+error
+success
+The batch response specs is defined in this link
+
+To get the list of batch jobs submitted
+
+curl http://ec2-127-0-0-1.us-west-2.compute.amazonaws.com:8998/batches
+The Livy Server Web UI after submitting jobs
+
+
+In this section, we look at the examples to use Livy Spark to submit batch job with HttpClient Library.
+
+object JobSubmitService {
+
+val path = this.getClass.getResource("/yarn.conf").getPath
+val clusterConfig = ClusterConfig(path)
+
+ /**
+  * Going to implement submit Spark jobs through Livy Services.
+  *
+  * @param args
+  */
+def main(args: Array[String]): Unit = {
+  if(args.length < 2) {
+    println(" Usage : JobSubmitService className jarHDFSPath [args]")
+    System.exit(1)
+  }
+  
+ val (className, jarHDFSPath) = (args(0), args(1))
+ val extraArgs =  if(args.length > 2) { args.slice(2,args.length).toList} else List()
+ val resultJson = submitJob(className, jarHDFSPath, extraArgs)
+  
+ val sessionid = resultJson.obj.get("id").get.asInstanceOf[Double].toInt
+
+ 
+}
+
+def submitJob(className: String, jarPath:String, extraArgs: List[String]) : JSONObject = {
+
+  val jobSubmitRequest = new HttpPost(s"${clusterConfig.livyserver}/batches")
+
+  val data =  Map(
+    "className"-> className,
+    "file" -> jarPath,
+    "driverMemory" -> "2g",
+    "name" -> "LivyTest",
+    "proxyUser" -> "hadoop")
+
+  if(extraArgs != null && !extraArgs.isEmpty) {
+    data  + ( "args" -> extraArgs)
+  }
+
+  val json = new JSONObject(data)
+
+  println(json.toString())
+
+  val params = new StringEntity(json.toString(),"UTF-8")
+  params.setContentType("application/json")
+
+  jobSubmitRequest.addHeader("Content-Type", "application/json")
+  jobSubmitRequest.addHeader("Accept", "*/*")
+  jobSubmitRequest.setEntity(params)
+
+  val client: CloseableHttpClient = HttpClientBuilder.create().build()
+  val response: CloseableHttpResponse = client.execute(jobSubmitRequest)
+  HttpReqUtil.parseHttpResponse(response)._2
+}
+
+}
+The full codebase is available in Github Repository.
+
+
+
+
+The Livy Server make developer jobs easy to build ad-hoc query execution engine as well as Business dashboards through micro-
+
+
+
+
+
+
+
+
 Joining RDDs from two different databases
 https://stackoverflow.com/questions/40054263/joining-rdds-from-two-different-databases
 
