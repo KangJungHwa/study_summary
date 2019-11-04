@@ -1,0 +1,46 @@
+https://greenplum-spark-connector.readthedocs.io/en/latest/Read-data-from-Greenplum-into-Spark.html
+
+https://github.com/kongyew/greenplum-spark-connector/blob/master/README_WRITE_JDBC.md
+
+
+그린플럼 데이터 spark로 select 하는 방법
+
+1. Pivotal Network 에서 greenplum-spark_2.11-xxjar를 다운로드하십시오 .
+
+val dataFrame = spark.read.format("io.pivotal.greenplum.spark.GreenplumRelationProvider")
+.option("dbtable", "basictable")
+.option("url", "jdbc:postgresql://gpdbsne/basic_db")
+.option("user", "gpadmin")
+.option("password", "pivotal")
+.option("driver", "org.postgresql.Driver")
+.option("partitionColumn", "id")
+.load()
+
+2.아래 명령어에 의해 필터링
+dataFrame.filter(dataFrame("id") > 40).show()
+
+Greenplum의 결과를 캐시하고 옵션을 사용하여 Spark 클러스터에서 메모리 내 처리 속도를 높이기 위해 임시 테이블을 작성합니다. 
+글로벌 임시보기 . 시스템 보존 데이터베이스 global_temp에 연결되어 있으므로 정규화 된 이름을 사용하여이를 참조해야합니다 
+(예 : SELECT * FROM global_temp.view1). 한편 Spark SQL의 임시 뷰는 세션 범위이며이를 생성하는 세션이 종료되면 사라집니다.
+scala>
+// Register the DataFrame as a global temporary view
+dataFrame.createGlobalTempView("tempdataFrame")
+// Global temporary view is tied to a system preserved database `global_temp`
+spark.sql("SELECT * FROM global_temp.tempdataFrame").show()
+
+
+import org.apache.spark.sql.functions.{col, lit}
+
+val allColumns: Seq[String] = ???
+
+val dataDF = spark.read.format("greenplum")
+  .option("url", conUrl)
+  .option("dbtable", "xx_lines")
+  .option("dbschema", "dbanscience")
+  .option("partitionColumn", "id")
+  .option("user", devUsrName)
+  .option("password", devPwd)
+  .load()
+  .where("year = 2017 and month=12")
+  .select(allColumns map col:_*)
+  .withColumn(flagCol, lit(0))
