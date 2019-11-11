@@ -1,0 +1,94 @@
+2
+
+Sentry exposes apache thrift client interface, here you can find thrift api definition sentry_policy_service.thrift. You can use it for client source code generating.
+
+Additionally, Cloudera releases compiled client libraries compatible to Sentry Service, distributed as a part of CDH i.e.:
+
+<dependency>
+    <groupId>org.apache.sentry</groupId>
+    <artifactId>sentry-provider-db</artifactId>
+    <version>1.5.1-cdh5.5.1</version>
+</dependency>
+available in Cloudera's maven repository:
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <repositories>
+     <repository>
+      <id>cloudera</id>
+      <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
+    </repository>
+  </repositories>
+</project>
+shareimprove this answer
+answered Sep 18 '16 at 17:31
+
+Artur I
+4144 bronze badges
+add a comment
+
+0
+
+Here is a sample program using "sentry-provider-db" to get the permission details of a given hive database, (this program may not be defining policy for Role, but this program might give you an idea, to use other methods to achieve that)
+
+public class ConnectSentry {
+
+
+    public static void main(String[] args) throws IOException, SentryUserException, LoginException {
+
+
+        String userName=args[0];
+        String databaseName=args[1];
+
+
+
+
+        Configuration conf = new Configuration();
+
+        conf.set(ClientConfig.SERVER_RPC_ADDRESS, "servernamexx.domain");
+        conf.set(ClientConfig.SERVER_RPC_PORT, "8038"); //default port is 8038, verify this setting in configuration of Sentry 
+
+
+
+        System.setProperty("javax.security.auth.login.name", "userName");
+
+
+        System.setProperty("java.security.auth.login.config", "login.conf");
+        System.setProperty("java.security.krb5.conf", "krb5.conf");
+        System.setProperty("javax.security.auth.useSubjectCredsOnly", "false");
+        System.setProperty("sun.security.krb5.debug", "false");
+
+
+
+
+        conf.set(ServerConfig.PRINCIPAL, "sentry/<sentry-server-principal>");
+
+        SentryPolicyServiceClientDefaultImpl sentryPolicyServiceClientDefaultImpl = new SentryPolicyServiceClientDefaultImpl(
+                conf);
+
+
+      sentryPolicyServiceClientDefaultImpl.listUserRoles(userName).
+             forEach(rolesentry -> {//System.out.println(rolesentry.getRoleName());
+             try {
+
+                 sentryPolicyServiceClientDefaultImpl.listAllPrivilegesByRoleName(userName, rolesentry.getRoleName()).forEach(
+                         allpriv ->{
+                             String db = allpriv.getDbName();
+                             String permission=allpriv.getAction();
+                             if (db.equals(args[1]))
+                             {
+                                 System.out.println("found database and permission is "+permission); 
+
+                             }
+                         }
+
+                         );
+
+            } catch (SentryUserException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+             });
+
+
+    }
+}
