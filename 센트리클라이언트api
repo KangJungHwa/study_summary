@@ -92,3 +92,7 @@ public class ConnectSentry {
 
     }
 }
+
+SentryPolicyServiceClientDefaultImpl
+
+https://github.com/apache/incubator-sentry/blob/master/sentry-provider/sentry-provider-db/src/main/java/org/apache/sentry/provider/db/service/thrift/SentryPolicyServiceClientDefaultImpl.java
