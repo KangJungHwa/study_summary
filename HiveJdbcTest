@@ -1,0 +1,76 @@
+package com.citi.tran;
+import java.sql.SQLException;
+import java.net.InetAddress;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.sql.DriverManager;
+
+
+public class HiveJdbcTest {
+
+	  public static void main(String[] args) throws SQLException {
+
+  	    ResultSet res=null;
+
+  	    Statement stmt=null;
+  	    Connection con=null;
+       try {
+
+    	   String hostName= InetAddress.getLocalHost().getHostName();
+    	   //hostName 지지고 복아서 jdbc url을 던진다.
+    	    con = getConnection("jdbc:hive2://192.168.159.15:10000/default");
+    	    stmt = con.createStatement();
+     
+     	   // rs안에서 처리시에는 반드시 stmt만 파라메터를 더지자
+     	   //conn을 던져서    close() 없이 다른 메소드에서 createStatement를 할경우 영원히 close() 안됨ㄱ 
+//    	    boolean isCrt = stmt.execute("create table " + tableName + " (key int, value string)");
+//    	    
+    	    // show tables
+    	    String sql = "show tables";
+    	    System.out.println("Running: " + sql);
+    	    res= stmt.executeQuery(sql);
+    	    if (res.next()) {
+    	      System.out.println(res.getString(1));
+    	    }
+    	    String tableName = "testHiveDriverTable";
+    	    stmt.execute("set tabname=pipa*");
+    	    res=stmt.executeQuery("set tabname");
+    	    if (res.next()) {
+    		      System.out.println("set : "+res.getString(1));    
+    	    }
+//    	    // describe table
+//    	    sql = "describe " + tableName;
+//    	    System.out.println("Running: " + sql);
+//    	    res = stmt.executeQuery(sql);
+//    	    while (res.next()) {
+//    	      System.out.println(res.getString(1) + "\t" + res.getString(2));
+//    	    }
+//    	    // load data into table
+//    	    // filepath 는 5번 하이브서버에 존재해야한다.
+//    	    // 하이브 서버가 아니라면  load data inpath를 사용해야함.
+//    	    String filepath = "/home/hadoop/test.txt"; // <---- 이걸 참고할것 아래에 내용 이어서.
+//    	    sql = "load data local inpath '" + filepath + "' into table " + tableName;
+//    	    System.out.println("Running: " + sql);
+//    	    res = stmt.executeQuery(sql);
+		
+		} catch (Exception e) {
+			// TODO: handle exception
+		}finally {
+			if(res!=null) {try {res.close();} catch (Exception e2) {}}
+			if(stmt!=null) {try {stmt.close();} catch (Exception e2) {}}
+			if(con!=null) {try {con.close();} catch (Exception e2) {}}
+		}
+	}
+	private static Connection getConnection(String jdbcURL) throws SQLException  {
+        try {
+            Class.forName("org.apache.hive.jdbc.HiveDriver");
+            return DriverManager.getConnection(jdbcURL, "", "");
+	    } catch (ClassNotFoundException e) {
+	        // TODO Auto-generated catch block
+	        e.printStackTrace();
+	        System.exit(1);
+	    }
+        return null;
+	}
+}
