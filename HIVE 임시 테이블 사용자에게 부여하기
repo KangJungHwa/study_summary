@@ -1,0 +1,8 @@
+catalog가 생성한 hive 임시 테이블을 사용자에게 읽기 권한을 부여하는방법
+1. x사번에 해당하는 role을 생성한다.
+    CREATE ROLE x0113664
+2. 해당롤을 x사번이 속한 그룹에 부여한다.
+    GRANT ROLE nextgenk TO GROUP nextgenk
+3. 해당 테이블 로케이션의 url과 테이블에 해당 role에 부여한다.
+    GRANT ALL ON URI '<table URL>' TO ROLE nextgenk
+	GRANT select ON TABLE l1_nextgenk TO ROLE nextgenk
