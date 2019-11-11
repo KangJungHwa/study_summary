@@ -1,0 +1,15 @@
+threshold=85
+
+message=$(df -Ph | awk -v threshold="$threshold" '
+   NR==1 {next}
+   $6=="/xenv1" {next}
+   $6=="/xenv2" {next}
+   1 {sub(/%/,"",$5)}
+   $5 > threshold {printf "%s is almost full: %d%%\n", $6, $5}')
+
+if [ -n "$message" ]; then
+  echo `hostname`" "$message  | mailx  -s `hostname`" file system Status BAD" -r noreply@`hostname` dl.cto.kr.big.data.monitoring@imcap.ap.ssmb.com
+else
+  message=`df -Ph`
+  echo `hostname`" $message" | mailx  -s `hostname`" file system Status GOOD" -r noreply@`hostname` dl.cto.kr.big.data.monitoring@imcap.ap.ssmb.com
+fi
