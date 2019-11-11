@@ -1,0 +1,30 @@
+데이터 프레이 gzip으로 압축하기
+
+df.write
+  .format("com.databricks.spark.csv")
+  .option("codec", "org.apache.hadoop.io.compress.GzipCodec")
+  .save(my_directory)
+  
+write the CSV file with headers and rename the part-000 file to .csv.gzip
+
+DF.coalesce(1).write.format("com.databricks.spark.csv").mode("overwrite")
+.option("header","true")
+.option("codec",org.apache.hadoop.io.compress.GzipCodec").save(tempLocationFileName)
+
+copyRename(tempLocationFileName, finalLocationFileName)
+
+def copyRename(srcPath: String, dstPath: String): Unit =  {
+  val hadoopConfig = new Configuration()
+  val hdfs = FileSystem.get(hadoopConfig)
+  FileUtil.copyMerge(hdfs, new Path(srcPath), hdfs, new Path(dstPath), true, hadoopConfig, null)
+  // the "true" setting deletes the source files once they are merged into the new output
+}
+
+
+gzip으로 압축된 csv 파일 읽기
+
+sql_context.read.format("com.databricks.spark.csv")
+.options(
+  header=... # e.g., "true"
+  inferSchema=...)
+.load(file_path + ".gz")
