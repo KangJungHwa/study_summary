@@ -1,0 +1,13 @@
+리비의 동작원리 이해
+https://gethue.com/how-to-use-the-livy-spark-rest-job-server-api-for-submitting-batch-jar-python-and-streaming-spark-jobs/
+
+spark 기본적으로 하나의 포트에 하나의 세션을 생성한다.
+다른 세션을 생성하기위해서는 다른 포트가 필요하다.
+
+그래서 livy를 이용하여 shared context를 사용한다.
+
+리비가 shared context를 이용하는 방법
+https://gethue.com/how-to-use-the-livy-spark-rest-job-server-api-for-sharing-spark-rdds-and-contexts/
+
+리비가 세션에 application id를 사전에 할당하는 과정 설명
+https://infoscis.github.io/2017/03/26/Writing-YARN-Applications/
