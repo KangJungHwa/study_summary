@@ -1,5 +1,10 @@
 진행해야할 명령어 리스트
+
+
 hbase data 디렉토리를 확인하여 오너그룹이 hbase로 되어 있지 않은지 확인할 것
+https://docs.microsoft.com/ko-kr/azure/hdinsight/hbase/hbase-troubleshoot-timeouts-hbase-hbck
+https://community.cloudera.com/t5/Support-Questions/HBase-Region-in-Transition/td-p/26703
+https://community.cloudera.com/t5/Support-Questions/HBase-Regions-stuck-in-FAILED-OPEN-state/td-p/129039
 1.hbase shell에서 아래 명령어로 hbase 상태 확인할 것
  status 'summary'
 2. hbase shell에서 아래 명령어로 catalogjanitor를 활성화 시킨다.
@@ -9,7 +14,12 @@ $ ./bin/hbase hbck catalog:fdc_summary catalog:fdc_trace
 
 
 
+hbase 쉘에서 테이블 비활성화
+hbck를 실행하여 다음 명령을 사용하여 문제를 해결하십시오.
 
+sudo -u hbase hbase hbck -repair
+
+hbase 쉘에서 테이블 사용
 
 
 
