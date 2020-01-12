@@ -1,3 +1,31 @@
+진행해야할 명령어 리스트
+1.hbase shell에서 아래 명령어로 hbase 상태 확인할 것
+ status 'summary'
+2. hbase shell에서 아래 명령어로 catalogjanitor를 활성화 시킨다.
+ catalogjanitor_enabled 
+3. 아래명령어는 쉘명령어로 hbase 메타와 hbase resion 정보와의 불일치를 확인한다.
+$ ./bin/hbase hbck catalog:fdc_summary catalog:fdc_trace
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 how to enable Catalog Janitor process in hbase
 
 https://sparkbyexamples.com/hbase/hbase-shell-commands-cheat-sheet/#catalogjanitor_enabled
