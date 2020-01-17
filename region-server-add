@@ -1,2 +1,8 @@
 https://docs.cloudera.com/HDPDocuments/HDP3/HDP-3.0.1/administration/content/add-hbase-region-server.html
 https://stackoverflow.com/questions/23686387/hadoop-and-hbase-rebalancing-after-node-additions
+https://learnhbase.net/2013/03/02/hbase-shell-commands/
+
+dfs.datanode.balance.bandwidthPerSec
+부수적인 설정이지만, HDFS의 Datanode간의 load balancing이 일어나는 속도를 제한하는 설정입니다.
+기본값은 1MB/sec로 되어 있지만, 계속해서 Datanode를 추가하거나 제거하는 경우에는 
+기본값으로는 너무 느릴 때가 있습니다. 저희는 10MB/sec 정도로 늘려서 사용하고 있습니다.
